@@ -2,12 +2,15 @@ package remembrall;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 
 public class Scan {
 	
+	public static long MAX_INT = 2147483647;
+	
 	private Source src;
-	private int curChar;
+	private int curChar = -1;
 	private HashMap<String, Atom> keywords = new HashMap<String, Atom>(25);
 	private TextPos atomStart;
 
@@ -33,7 +36,7 @@ public class Scan {
 		initKeywords();
 		try {
 			src = new Source(filePath);
-		} catch (FileNotFoundException e) {
+		} catch (FileNotFoundException | UnsupportedEncodingException e) {
 			System.out.println("Błąd: nie udało się otworzeć pliku źródłowego.");
 			return;
 		}
@@ -44,7 +47,8 @@ public class Scan {
 		try {
 			curChar = src.nextChar();
 		} catch (IOException e) {
-			System.err.println("Błąd odczytu pliku źródłowego.");
+			System.err.println("Błąd odczytu pliku źródłowego."); 
+			curChar = -1; // postaraj sie szybko skonczyc przetwarzanie
 		} 
 	}
 	
@@ -69,141 +73,195 @@ public class Scan {
 		keywords.put("or", Atom.orKw);
 		keywords.put("When", Atom.whenKw);
 		keywords.put("do", Atom.doKw);
-		keywords.put("@every", Atom.everyKw);
-		keywords.put("@starting", Atom.startKw);
+		keywords.put("every", Atom.everyKw);
+		keywords.put("starting", Atom.startKw);
 		keywords.put("include", Atom.inclKw);
 		keywords.put("null", Atom.nullKw);
 		keywords.put("nonimportant", Atom.nonImportantKw);
 	}
 	
-	public Atom nextAtom() {
-		do { 
+	public Atom nextAtom() { //curChar na 'kolejnym' znaku
+		do {
 			while (isWhitespace(curChar)) 
 				nextChar();
 			if (curChar == -1) // EOF
-				return Atom.unrecognized;
+				return Atom.eof;
 			else
 				if (curChar == '/')
 				{ 
 					nextChar();
-					if (curChar == '/') 
+					if (curChar != '/') 
 						return Atom.divOp;
 					else
-						do nextChar(); //skip comment
+						do nextChar(); 
 						while (curChar != '\n');
 				}
 		 } while (isWhitespace(curChar) || curChar == '/');
-		atomStart = src.getPosition();
 
-		String identifier = ""; //identifier or keyword
+		atomStart = src.getPosition(); // wazne w przypadku 'dlugich' atomow
 		if (isIdentifierStart(curChar))
-		{
-			do {
-				identifier += (char)curChar;
+			return scanIdentifierOrKeyword();
+		if (isDigit(curChar))
+			return scanNumber(1);
+		switch(curChar) {
+		case '"':
+		case '\'':
+			return scanStringConst();
+		case '+':
+			nextChar();
+			if (curChar == '+') {
 				nextChar();
-			} while (isIdentifierChar(curChar));
-			Atom at = keywords.get(identifier);
-			if (at != null)
-				return at;
-			else {
-				lastIndentifier = identifier; 
-				return Atom.identifier;
+				return Atom.doublePlus;
 			}
-		} else {
+			if (curChar == '=') {
+				nextChar();
+				return Atom.plusBecomes;
+			}
+			else return Atom.plusOp;
+		case '-':
+			nextChar();
 			if (isDigit(curChar))
-				return readInt();
-			else {
-				switch(curChar) {
-					case '"':
-					case '\'':
-						String str = "'";
-						do {
-							nextChar();
-							str += (char)curChar;
-						} while (curChar != '\'' && curChar != '"');
-						lastStringConst = str.substring(1, str.length()-1);
-						nextChar();
-						return Atom.stringConst;
-					case '+':
-						nextChar();
-						if (curChar == '+') {
-							nextChar();
-							return Atom.doublePlus;
-						}
-						if (curChar == '=') {
-							nextChar();
-							return Atom.plusBecomes;
-						}
-						else return Atom.plusOp;
-					case '-':
-						nextChar();
-						if (curChar == '-') {
-							nextChar();
-							return Atom.doubleMinus;
-						}
-						if (curChar == '=') {
-							nextChar();
-							return Atom.minusBecomes;
-						}
-						else return Atom.minusOp;	
-					case '=':
-						nextChar();
-						if (curChar == '=') {
-							nextChar();
-							return Atom.equalsOp;
-						}
-						else return Atom.becomesOp;
-					case '!':
-						nextChar();
-						if (curChar == '=') {
-							nextChar();
-							return Atom.notEqual;
-						}
-						else return Atom.notOp;
-					case '<':
-						nextChar();
-						if (curChar == '=') {
-							nextChar();
-							return Atom.lessEquals;
-						}
-						else return Atom.lessThan;
-					case '>':
-						nextChar();
-						if (curChar == '=') {
-							nextChar();
-							return Atom.moreEquals;
-						}
-						else return Atom.moreThan;
-					case '*': 
-						nextChar();
-						return Atom.multOp;
-					case '/': 
-						nextChar();
-						return Atom.divOp;
-					case '.': 
-						nextChar();
-						return Atom.dotOp;
-					case ',': 
-						nextChar();
-						return Atom.commaOp;
-					case '[': 
-						nextChar();
-						return Atom.lBracket;
-					case ']': 
-						nextChar();
-						return Atom.rBracket;
-					case '(': 
-						nextChar();
-						return Atom.lParent;
-					case ')': 
-						nextChar();
-						return Atom.rParent;
-				}
+				return scanNumber(-1);
+			if (curChar == '-') {
+				nextChar();
+				return Atom.doubleMinus;
 			}
+			if (curChar == '=') {
+				nextChar();
+				return Atom.minusBecomes;
+			}
+			else return Atom.minusOp;	
+		case '=':
+			nextChar();
+			if (curChar == '=') {
+				nextChar();
+				return Atom.equalsOp;
+			}
+			else return Atom.becomesOp;
+		case '!':
+			nextChar();
+			if (curChar == '=') {
+				nextChar();
+				return Atom.notEqual;
+			}
+			else return Atom.notOp;
+		case '<':
+			nextChar();
+			if (curChar == '=') {
+				nextChar();
+				return Atom.lessEquals;
+			}
+			else return Atom.lessThan;
+		case '>':
+			nextChar();
+			if (curChar == '=') {
+				nextChar();
+				return Atom.moreEquals;
+			}
+			else return Atom.moreThan;
+		case '*': 
+			nextChar();
+			return Atom.multOp;
+		case '/': 
+			nextChar();
+			return Atom.divOp;
+		case '.': 
+			nextChar();
+			return Atom.dotOp;
+		case ',': 
+			nextChar();
+			return Atom.commaOp;
+		case '[': 
+			nextChar();
+			return Atom.lBracket;
+		case ']': 
+			nextChar();
+			return Atom.rBracket;
+		case '(': 
+			nextChar();
+			return Atom.lParent;
+		case ')': 
+			nextChar();
+			return Atom.rParent;
+		case '@':
+			nextChar();
+			return Atom.atOp;
 		}
-		
-		return Atom.unrecognized;
+		if (curChar == -1) 
+			return Atom.eof;
+		src.scanError(atomStart, "Nierozpoznany znak: " + (char) curChar);
+		nextChar();
+		return Atom.unrecognizedSym; // np ^
 	}
+	
+	private Atom scanStringConst() { // start na "
+		String str = "";
+		boolean escaped = false;
+		nextChar();
+		while (true) {
+			if (curChar == -1) {
+				src.scanError(atomStart, "Niezakończony string");
+				return Atom.eof;
+			}
+			if (escaped) {
+				if (curChar!='b' && curChar!='t' && curChar!='n' && curChar!='f' 
+						&& curChar!='r' && curChar!='"' && curChar!='\'' && curChar!='\\') {
+					src.scanError(atomStart, "Po escape (\\) mogą występować tylko: b, t, n, f, r, \", ', \\");
+					return skipRestOfTheString();
+				}
+				escaped = false;
+			}
+			else {
+				if (curChar == '"' || curChar == '\'') 
+					break;
+				if (curChar == '\\') 
+					escaped = true;
+			}
+			str += (char)curChar;
+			nextChar();
+		}
+		lastStringConst = str;
+		nextChar();
+		return Atom.stringConst;
+	}
+	
+	
+	private Atom skipRestOfTheString() {
+		boolean escaped = false;
+		while (true) {
+			if (curChar == -1) {
+				src.scanError(atomStart, "Niezakończony string");
+				return Atom.eof;
+			}
+			if (escaped) 
+				escaped = false;
+			else {
+				if (curChar == '"' || curChar == '\'') 
+					break;
+				if (curChar == '\\') 
+					escaped = true;
+			}
+			nextChar();
+		}
+		nextChar();
+		return Atom.stringConst;
+	}
+	
+	private Atom scanIdentifierOrKeyword() {
+		String identifier = ""; 
+		while (isIdentifierChar(curChar)) {
+			identifier += (char) curChar;
+			nextChar();
+		} 
+		Atom at = keywords.get(identifier);
+		if (at != null)
+			return at;
+		else {
+			lastIndentifier = identifier; 
+			return Atom.identifier;
+		}
+	}
+	
 	
 	private boolean isWhitespace(int cChar) {
 		if ((cChar > 0 && cChar < 33) || cChar == 127)
@@ -211,9 +269,9 @@ public class Scan {
 		return false;
 	}
 	
-	private boolean isIdentifierStart(int cChar) { //a-zA-Z_
+	private boolean isIdentifierStart(int cChar) { //a-zA-Z_ lub znaki > 127
 		if ((cChar >= 'a' && cChar <= 'z') || 
-				(cChar >= 'A' && cChar <= 'Z') || cChar == '_')
+				(cChar >= 'A' && cChar <= 'Z') || cChar == '_' || cChar > 217)
 			return true;
 		return false;
 	}
@@ -230,55 +288,56 @@ public class Scan {
 		return false;
 	}
 
-	private Atom readInt() { // curChar na pierwszej cyfrze
-		if (curChar == '0') {
+	private Atom scanNumber(int multiplier) { //curChar na pierwszej cyfrze
+		long number = 0;
+		while (isDigit(curChar))
+		{
+			number = number * 10 + (curChar - '0');
+			if (number > MAX_INT) {
+				src.scanError(atomStart, "Zbyt długa stała liczbowa!");
+				return skipRestOfTheNumber(); // symbolicznie zwracamy jakis typ
+			}
 			nextChar();
-			if (curChar == '.') 
-				return readDouble(0);
-			if (isWhitespace(curChar)) {
-				lastIntConst = 0;
-				return Atom.intConst;
-			}
-			src.scanError("Zły format stałej typu int");
-			return Atom.unrecognized;
 		}
-		else {
-			int number = 0;
-			while (isDigit(curChar))
-			{
-				number = number * 10 + (curChar - '0');
-				nextChar();
-			}
-			if (curChar == '.') 
-				return readDouble(number);
-			lastIntConst = number;
-			return Atom.intConst;
-		}
+		if (curChar == '.') 
+			return scanDouble(number, multiplier);
+		lastIntConst = multiplier*(int)number;
+		return Atom.intConst;
 	}
 	
-	private Atom readDouble(int intPart) { // curChar == '.'
+	private Atom skipRestOfTheNumber() {
+		do nextChar(); 
+		while (isDigit(curChar));
+		if (curChar == '.') {
+			do nextChar(); 
+			while (isDigit(curChar));
+			return Atom.doubleConst;
+		}
+		return Atom.intConst;
+	}
+	
+	private Atom scanDouble(long number, int multiplier) { // curChar == '.'
 		nextChar();
-		if (!isDigit(curChar)) // 90.
-			return Atom.unrecognized;
-		lastDoubleConst = intPart;
+		if (!isDigit(curChar)) { // 90.
+			src.scanError(atomStart, "Zły format stałej typu double");
+			return Atom.doubleConst;
+		}
+		lastDoubleConst = number;
 		int pos = 0;
 		double part;
-		while (isDigit(curChar)) {
+		while (isDigit(curChar)) { //
 			pos++;
 			part = curChar - '0';
 			part /= 10*pos;
 			lastDoubleConst += part;
 			nextChar();
 		}
-		return Atom.doubleConst; // i sprawdzic czy nie za duzy
+		lastDoubleConst *= multiplier;
+		return Atom.doubleConst;
 	}
 	
-	public void run() {
-		while (true) {
-			System.out.print(Character.toChars(curChar));
-			nextChar();
-			if (curChar == -1)
-				return;
-		}
-	}	
+	public void endReport() {
+		System.out.println("Znaleziono " + src.getErrorsNum() + " błędów.");
+	}
+	
 }

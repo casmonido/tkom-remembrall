@@ -5,10 +5,10 @@ public class Main {
 
 
 	public static void main (String [] args) {
-		Scan scan = new Scan("/home/kaja/Desktop/xxx.txt");
-		//scan.run();
+		Scan scan = new Scan("/home/kaja/Desktop/tkom-przyklady/f");
+
 		Atom at;
-		while ((at = scan.nextAtom()) != Atom.unrecognized) {
+		while ((at = scan.nextAtom()) != Atom.eof) {
 			if (at == Atom.identifier)
 				System.out.print(scan.getIdentifier() + " -- ");
 			if (at == Atom.stringConst)
@@ -19,5 +19,6 @@ public class Main {
 				System.out.print(scan.getDoubleConst() + " -- ");
 			System.out.println(at);
 		}
+		scan.endReport();
 	}	
 }

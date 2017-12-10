@@ -27,8 +27,6 @@ public enum Atom {
 	nullKw,
 	nonImportantKw,
 	
-	unrecognized,
-	
 	identifier,
 	intConst,
 	doubleConst,
@@ -56,6 +54,9 @@ public enum Atom {
 	lBracket, // [
 	rBracket, // ]
 	lParent, // (
-	rParent //)
-
+	rParent, //)
+	atOp,// @
+	
+	eof, 
+	unrecognizedSym
 }
