@@ -1,8 +1,6 @@
 package remembrall;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 
 public class Scan {
@@ -14,8 +12,8 @@ public class Scan {
 	private HashMap<String, Atom> keywords = new HashMap<String, Atom>(25);
 	private TextPos atomStart;
 
-	private String lastStringConst;
-	private String lastIndentifier;
+	private String lastStringConst = "";
+	private String lastIndentifier = "";
 	private int lastIntConst;
 	private double lastDoubleConst;
 	
@@ -32,14 +30,9 @@ public class Scan {
 		return lastDoubleConst;
 	}
 	
-	public Scan(String filePath) {
+	public Scan(Source src) {
 		initKeywords();
-		try {
-			src = new Source(filePath);
-		} catch (FileNotFoundException | UnsupportedEncodingException e) {
-			System.out.println("Błąd: nie udało się otworzeć pliku źródłowego.");
-			return;
-		}
+		this.src = src;
 		nextChar();
 	}
 	
@@ -190,7 +183,7 @@ public class Scan {
 		if (curChar == -1) 
 			return Atom.eof;
 		src.scanError(atomStart, "Nierozpoznany znak: " + (char) curChar);
-		nextChar();
+		nextChar(); 
 		return Atom.unrecognizedSym; // np ^
 	}
 	
@@ -336,7 +329,7 @@ public class Scan {
 		return Atom.doubleConst;
 	}
 	
-	public void endReport() {
+	public void printEndReport() {
 		System.out.println("Znaleziono " + src.getErrorsNum() + " błędów.");
 	}
 	

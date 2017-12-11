@@ -43,7 +43,7 @@ public class Source {
 	
 	public void scanError(TextPos startPos, String errorMsg) {
 		totalErrors++;
-		System.out.println(startPos.toString() + ": " + errorMsg); //i przewin? do nowej linii? przez wszystkie inty? what?
+		System.out.println(startPos.toString() + ": " + errorMsg);
 	}
 	
 	public int getErrorsNum() {
