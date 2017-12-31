@@ -2,33 +2,16 @@ package remembrall;
 
 import java.io.IOException;
 import java.util.HashMap;
+import remembrall.tokens.*;
 
 public class Scan {
-	
-	public static long MAX_INT = 2147483647;
 	
 	private Source src;
 	private int curChar = -1;
 	private HashMap<String, Atom> keywords = new HashMap<String, Atom>(25);
 	private TextPos atomStart;
+	private ErrorTracker errTracker = new ErrorTracker();
 
-	private String lastStringConst = "";
-	private String lastIndentifier = "";
-	private int lastIntConst;
-	private double lastDoubleConst;
-	
-	public String getIdentifier() {
-		return lastIndentifier;
-	}
-	public String getStringConst() {
-		return lastStringConst;
-	}	
-	public int getIntConst() {
-		return lastIntConst;
-	}
-	public double getDoubleConst() {
-		return lastDoubleConst;
-	}
 	
 	public Scan(Source src) {
 		initKeywords();
@@ -73,174 +56,164 @@ public class Scan {
 		keywords.put("nonimportant", Atom.nonImportantKw);
 	}
 	
-	public Atom nextAtom() { //curChar na 'kolejnym' znaku
+	public Token nextToken() { //curChar na 'kolejnym' znaku
 		do {
 			while (isWhitespace(curChar)) 
 				nextChar();
 			if (curChar == -1) // EOF
-				return Atom.eof;
+				return new BasicToken(Atom.eof, src.getPosition());
 			else
 				if (curChar == '/')
-				{ 
+				{
+					atomStart = src.getPosition();
 					nextChar();
 					if (curChar != '/') 
-						return Atom.divOp;
+						return new BasicToken(Atom.divOp, atomStart);
 					else
 						do nextChar(); 
 						while (curChar != '\n');
 				}
 		 } while (isWhitespace(curChar) || curChar == '/');
 
-		atomStart = src.getPosition(); // wazne w przypadku 'dlugich' atomow
+		atomStart = src.getPosition(); // mozliwy start 'dlugich' atomow
 		if (isIdentifierStart(curChar))
 			return scanIdentifierOrKeyword();
 		if (isDigit(curChar))
-			return scanNumber(1);
+			return scanNumber("");
 		switch(curChar) {
 		case '"':
 		case '\'':
-			return scanStringConst();
+			return scanStringConst(curChar);
 		case '+':
 			nextChar();
 			if (curChar == '+') {
 				nextChar();
-				return Atom.doublePlus;
+				return new BasicToken(Atom.doublePlus, atomStart);
 			}
 			if (curChar == '=') {
 				nextChar();
-				return Atom.plusBecomes;
+				return new BasicToken(Atom.plusBecomes, atomStart);
 			}
-			else return Atom.plusOp;
+			else 
+				return new BasicToken(Atom.plusOp, atomStart);
 		case '-':
 			nextChar();
 			if (isDigit(curChar))
-				return scanNumber(-1);
+				return scanNumber("-");
 			if (curChar == '-') {
 				nextChar();
-				return Atom.doubleMinus;
+				return new BasicToken(Atom.doubleMinus, atomStart);
 			}
 			if (curChar == '=') {
 				nextChar();
-				return Atom.minusBecomes;
+				return new BasicToken(Atom.minusBecomes, atomStart);
 			}
-			else return Atom.minusOp;	
+			else 
+				return new BasicToken(Atom.minusOp, atomStart);	
 		case '=':
 			nextChar();
 			if (curChar == '=') {
 				nextChar();
-				return Atom.equalsOp;
+				return new BasicToken(Atom.equalsOp, atomStart);
 			}
-			else return Atom.becomesOp;
+			else 
+				return new BasicToken(Atom.becomesOp, atomStart);
 		case '!':
 			nextChar();
 			if (curChar == '=') {
 				nextChar();
-				return Atom.notEqual;
+				return new BasicToken(Atom.notEqual, atomStart);
 			}
-			else return Atom.notOp;
+			else 
+				return new BasicToken(Atom.notOp, atomStart);
 		case '<':
 			nextChar();
 			if (curChar == '=') {
 				nextChar();
-				return Atom.lessEquals;
+				return new BasicToken(Atom.lessEquals, atomStart);
 			}
-			else return Atom.lessThan;
+			else 
+				return new BasicToken(Atom.lessThan, atomStart);
 		case '>':
 			nextChar();
 			if (curChar == '=') {
 				nextChar();
-				return Atom.moreEquals;
+				return new BasicToken(Atom.moreEquals, atomStart);
 			}
-			else return Atom.moreThan;
+			else 
+				return new BasicToken(Atom.moreThan, atomStart);
 		case '*': 
 			nextChar();
-			return Atom.multOp;
+			return new BasicToken(Atom.multOp, atomStart);
 		case '/': 
 			nextChar();
-			return Atom.divOp;
+			return new BasicToken(Atom.divOp, atomStart);
 		case '.': 
 			nextChar();
-			return Atom.dotOp;
+			return new BasicToken(Atom.dotOp, atomStart);
 		case ',': 
 			nextChar();
-			return Atom.commaOp;
+			return new BasicToken(Atom.commaOp, atomStart);
 		case '[': 
 			nextChar();
-			return Atom.lBracket;
+			return new BasicToken(Atom.lBracket, atomStart);
 		case ']': 
 			nextChar();
-			return Atom.rBracket;
+			return new BasicToken(Atom.rBracket, atomStart);
 		case '(': 
 			nextChar();
-			return Atom.lParent;
+			return new BasicToken(Atom.lParent, atomStart);
 		case ')': 
 			nextChar();
-			return Atom.rParent;
+			return new BasicToken(Atom.rParent, atomStart);
 		case '@':
 			nextChar();
-			return Atom.atOp;
+			return new BasicToken(Atom.atOp, atomStart);
 		}
-		if (curChar == -1) 
-			return Atom.eof;
-		src.scanError(atomStart, "Nierozpoznany znak: " + (char) curChar);
+		errTracker.scanError(atomStart, "Nierozpoznany znak: " + (char) curChar);
 		nextChar(); 
-		return Atom.unrecognizedSym; // np ^
+		return new BasicToken(Atom.unrecognizedSym, atomStart); // np ^
 	}
 	
-	private Atom scanStringConst() { // start na "
+	private Token scanStringConst(int stringStart) { // start na "
 		String str = "";
-		boolean escaped = false;
 		nextChar();
-		while (true) {
+		while (curChar != stringStart) {
 			if (curChar == -1) {
-				src.scanError(atomStart, "Niezakończony string");
-				return Atom.eof;
+				errTracker.scanError(atomStart, "Niezakończony string");
+				return new BasicToken(Atom.eof, atomStart);
 			}
-			if (escaped) {
-				if (curChar!='b' && curChar!='t' && curChar!='n' && curChar!='f' 
-						&& curChar!='r' && curChar!='"' && curChar!='\'' && curChar!='\\') {
-					src.scanError(atomStart, "Po escape (\\) mogą występować tylko: b, t, n, f, r, \", ', \\");
-					return skipRestOfTheString();
+			if (curChar == '\\') { 
+				nextChar();
+				if (curChar!=stringStart && curChar!='\\') { // -1 również wywoła ten error
+					errTracker.scanError(atomStart, "Po escape (\\) mogą występować tylko: \" lub ', \\"); //b, t, n, f, r,
+					return skipRestOfTheString(stringStart); 
 				}
-				escaped = false;
 			}
-			else {
-				if (curChar == '"' || curChar == '\'') 
-					break;
-				if (curChar == '\\') 
-					escaped = true;
-			}
-			str += (char)curChar;
+			str += (char)curChar; 
 			nextChar();
 		}
-		lastStringConst = str;
 		nextChar();
-		return Atom.stringConst;
+		return new StringToken(Atom.stringConst, atomStart, str);
 	}
 	
 	
-	private Atom skipRestOfTheString() {
-		boolean escaped = false;
-		while (true) {
+	private Token skipRestOfTheString(int stringStart) {
+		while (curChar != stringStart) {
 			if (curChar == -1) {
-				src.scanError(atomStart, "Niezakończony string");
-				return Atom.eof;
+				errTracker.scanError(atomStart, "Niezakończony string");
+				return new BasicToken(Atom.eof, atomStart);
 			}
-			if (escaped) 
-				escaped = false;
-			else {
-				if (curChar == '"' || curChar == '\'') 
-					break;
-				if (curChar == '\\') 
-					escaped = true;
+			if (curChar == '\\') { 
+				nextChar();
 			}
 			nextChar();
 		}
 		nextChar();
-		return Atom.stringConst;
+		return new BasicToken(Atom.unrecognizedSym, atomStart);
 	}
 	
-	private Atom scanIdentifierOrKeyword() {
+	private Token scanIdentifierOrKeyword() {
 		String identifier = ""; 
 		while (isIdentifierChar(curChar)) {
 			identifier += (char) curChar;
@@ -248,11 +221,9 @@ public class Scan {
 		} 
 		Atom at = keywords.get(identifier);
 		if (at != null)
-			return at;
-		else {
-			lastIndentifier = identifier; 
-			return Atom.identifier;
-		}
+			return new BasicToken(at, atomStart);
+		else 
+			return new StringToken(Atom.identifier, atomStart, identifier);
 	}
 	
 	
@@ -280,57 +251,69 @@ public class Scan {
 			return true;
 		return false;
 	}
-
-	private Atom scanNumber(int multiplier) { //curChar na pierwszej cyfrze
-		long number = 0;
-		while (isDigit(curChar))
-		{
-			number = number * 10 + (curChar - '0');
-			if (number > MAX_INT) {
-				src.scanError(atomStart, "Zbyt długa stała liczbowa!");
-				return skipRestOfTheNumber(); // symbolicznie zwracamy jakis typ
-			}
-			nextChar();
-		}
-		if (curChar == '.') 
-			return scanDouble(number, multiplier);
-		lastIntConst = multiplier*(int)number;
-		return Atom.intConst;
-	}
 	
-	private Atom skipRestOfTheNumber() {
-		do nextChar(); 
-		while (isDigit(curChar));
-		if (curChar == '.') {
-			do nextChar(); 
-			while (isDigit(curChar));
-			return Atom.doubleConst;
-		}
-		return Atom.intConst;
-	}
-	
-	private Atom scanDouble(long number, int multiplier) { // curChar == '.'
+	private Token scanNumberThatStartsWithZero(String scannedPart) {//curChar jest 0
+		scannedPart += (char)curChar;
 		nextChar();
-		if (!isDigit(curChar)) { // 90.
-			src.scanError(atomStart, "Zły format stałej typu double");
-			return Atom.doubleConst;
-		}
-		lastDoubleConst = number;
-		int pos = 0;
-		double part;
-		while (isDigit(curChar)) { //
-			pos++;
-			part = curChar - '0';
-			part /= 10*pos;
-			lastDoubleConst += part;
-			nextChar();
-		}
-		lastDoubleConst *= multiplier;
-		return Atom.doubleConst;
+		if (curChar == '.')
+			return scanDouble(scannedPart);
+		else
+			if (isDigit(curChar)) {
+				errTracker.scanError(atomStart, "Błędny format stałej liczbowej - zera wiodące");
+				discardErroneousNum();
+				return new BasicToken(Atom.unrecognizedSym, atomStart);
+			}
+		return new IntToken(Atom.intConst, atomStart, 0);	
 	}
+	
+	private void discardErroneousNum() {
+		while (isDigit(curChar))
+			nextChar();
+		if (curChar == '.')
+			nextChar();
+		while (isDigit(curChar))
+			nextChar();
+	}
+
+	private Token scanNumber(String scannedPart) { //curChar na pierwszej cyfrze
+		if (curChar == '0') 
+			return scanNumberThatStartsWithZero(scannedPart);
+		do
+		{
+			scannedPart += (char)curChar;
+			nextChar();
+		} while (isDigit(curChar));
+		if (curChar == '.') 
+			return scanDouble(scannedPart);
+		else {
+			long i = 0;
+			try {
+				i = Long.parseLong(scannedPart);
+			} catch (NumberFormatException ne) { // za długi na long
+				return new DoubleToken(Atom.doubleConst, atomStart, Double.parseDouble(scannedPart));
+			}
+			return new IntToken(Atom.intConst, atomStart, i);
+		}
+	}
+	
+	private Token scanDouble(String scannedPart) { //curChar na .
+		scannedPart += (char)curChar;
+		nextChar();
+		if (!isDigit(curChar)) {
+			errTracker.scanError(atomStart, "Nieprawidłowy format stałej double - brak cyfr po kropce!");
+			return new BasicToken(Atom.unrecognizedSym, atomStart);
+		}
+		do
+		{
+			scannedPart += (char)curChar;
+			nextChar();
+		} while (isDigit(curChar));
+		return new DoubleToken(Atom.doubleConst, atomStart, Double.parseDouble(scannedPart));
+	}
+	
 	
 	public void printEndReport() {
-		System.out.println("Znaleziono " + src.getErrorsNum() + " błędów.");
+		System.out.println("Znaleziono " + errTracker.getErrorsNum() + " błędów.");
 	}
 	
 }

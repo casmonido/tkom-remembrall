@@ -1,38 +1,35 @@
 package remembrall;
 
-import java.io.FileNotFoundException;
-import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
+import java.util.Map;
+
+class A {
+	int a = 5;
+	Integer s;
+	public A() {}
+}
 
 public class Main {
 
-
 	public static void main (String [] args) {
-		String filePath = "/home/kaja/Desktop/tkom-przyklady/e";
-		Scan scan;
+		String filePath = "/home/kaja/Desktop/tkom-przyklady/f";
+		Parser parser = new Parser(filePath);
+		Environment env = new Environment();
 		try {
-			scan = new Scan(new Source(filePath));
-		} catch (FileNotFoundException | UnsupportedEncodingException e) {
-			System.out.println("Błąd: nie udało się otworzeć pliku źródłowego.");
-			return;
+			parser.assignExp(env);
+			IdentValue t = env.resolve("i");
+			if (t.v != null)
+				System.out.println(t.v);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
+		Map<String, Object> identTable = new HashMap<String, Object>(5);
+		identTable.put("s", new A());
+		System.out.println(((A)identTable.get("s")).a + " " + ((A)identTable.get("s")).s );
+		((A)identTable.get("s")).s = 6;
+		System.out.println(((A)identTable.get("s")).a + " " + ((A)identTable.get("s")).s );
 		
+	}
 
-		Atom at;
-		
-		while ((at = scan.nextAtom()) != Atom.eof) {
-			
-			if (at == Atom.identifier)
-				System.out.print(" -- " + scan.getIdentifier()+" -- "  );
-			if (at == Atom.stringConst)
-				System.out.print(" -- " + scan.getStringConst()+" -- " );
-			if (at == Atom.intConst)
-				System.out.print(" -- " + scan.getIntConst()+" -- " );
-			if (at == Atom.doubleConst)
-				System.out.print(" -- " + scan.getDoubleConst() + " -- " );
-			
-			System.out.println(at);
-
-		}
-		scan.printEndReport();
-	}	
 }

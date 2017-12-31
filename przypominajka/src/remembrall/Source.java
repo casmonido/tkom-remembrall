@@ -7,19 +7,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 
-class TextPos {
-	int lineNum = 1;
-	int charNum = 0;
-	
-	public String toString() {
-		return "In line:" + lineNum + ", symbol:" + charNum;
-	}
-}
 
 public class Source {
 
 	private BufferedReader bufferedReader; 
-	private int totalErrors = 0;
 	private TextPos currentPos = new TextPos();
 
 	public Source (String srcFileName) throws FileNotFoundException, UnsupportedEncodingException {
@@ -31,28 +22,22 @@ public class Source {
 		if (bufferedReader == null)
 			return -1;
 		int c = bufferedReader.read();
-		if (c == -1) 
+		if (c == -1) {
 			bufferedReader.close();
-		adjustCurrentPos(c);
+			bufferedReader = null;
+		}
+		adjustCurrentPos(c); 
 		return c;
 	}
 
 	public TextPos getPosition() {
-		return currentPos;
+		return new TextPos(currentPos);
 	}
-	
-	public void scanError(TextPos startPos, String errorMsg) {
-		totalErrors++;
-		System.out.println(startPos.toString() + ": " + errorMsg);
-	}
-	
-	public int getErrorsNum() {
-		return totalErrors;
-	}
-	
 	
 	private void adjustCurrentPos(int c) {
-		if (c == '\n' || currentPos.lineNum == 0) {
+		// line 1 + char 1
+		// \n  -> line ++ i char = 
+		if (c == '\n') {
 			currentPos.lineNum++;
 			currentPos.charNum = 0;
 		}
