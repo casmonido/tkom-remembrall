@@ -4,5 +4,5 @@ import remembrall.IdentValue;
 
 public interface Node {
 
-	public IdentValue evalNode();
+	public IdentValue evalNode() throws Exception;
 }

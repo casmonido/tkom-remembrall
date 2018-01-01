@@ -16,7 +16,7 @@ public class BoolOrNode implements Node {
 	}
 
 	@Override
-	public IdentValue evalNode() {
+	public IdentValue evalNode() throws Exception {
 		return new IdentValue(((boolean) left.evalNode().v) ||
 				((boolean) right.evalNode().v));
 	}

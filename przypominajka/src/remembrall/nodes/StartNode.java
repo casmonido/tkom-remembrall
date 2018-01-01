@@ -15,7 +15,7 @@ public class StartNode implements Node {
 	}
 
 	@Override
-	public IdentValue evalNode() {
+	public IdentValue evalNode() throws Exception {
 		if ((boolean)left.evalNode().v == true)
 			for (Node r : right)
 				r.evalNode();

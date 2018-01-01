@@ -15,7 +15,7 @@ public class AssignExpNode implements Node {
 	}
 
 	@Override
-	public IdentValue evalNode() {
+	public IdentValue evalNode() throws Exception {
 		env.bind((String)left.evalNode().v, right.evalNode().v);
 		return right.evalNode();
 	}

@@ -5,16 +5,29 @@ import java.io.UnsupportedEncodingException;
 import java.util.LinkedList;
 import java.util.List;
 
+import remembrall.nodes.AdditionNode;
 import remembrall.nodes.BoolAndNode;
 import remembrall.nodes.BoolNotNode;
 import remembrall.nodes.BoolOrNode;
+import remembrall.nodes.DivNode;
+import remembrall.nodes.EqualsNode;
+import remembrall.nodes.LessEqualsNode;
+import remembrall.nodes.LessThanNode;
 import remembrall.nodes.LiteralNode;
+import remembrall.nodes.MoreEqualsNode;
+import remembrall.nodes.MoreThanNode;
+import remembrall.nodes.MultiplicationNode;
 import remembrall.nodes.Node;
+import remembrall.nodes.NotEqualNode;
+import remembrall.nodes.SelfAdditionNode;
+import remembrall.nodes.SelfSubstractionNode;
 import remembrall.tokens.DoubleToken;
 import remembrall.tokens.IntToken;
 import remembrall.tokens.StringToken;
 import remembrall.tokens.Token;
 import remembrall.nodes.StartNode;
+import remembrall.nodes.SubstractionNode;
+import remembrall.nodes.VariableNode;
 
 
 public class Parser {
@@ -22,8 +35,9 @@ public class Parser {
 	private Scan scan;
 	private Node root;
 	
+
 	
-	private Token accept(Atom atom) throws Exception {
+	private Token accept(Atom atom) throws Exception { // po co to
 		if (currToken.getAtom() == atom) {
 			Token thisToken = currToken;
 			currToken = scan.nextToken();
@@ -54,10 +68,13 @@ public class Parser {
 	//<collectionDecl> -> <identifier> (  ‘:’ <collectionType> ) 
 	//					| ( ‘=’  ‘[‘ <lit> (‘,’ <lit>)* ‘]’  )
 	void collectionDecl(Environment env) throws Exception {
-		String var = variable();
+		String var = variable(env);
 		accept(Atom.becomesOp);
-		Token val = valExp();
-		env.bind(var, val.getValue());
+		Node val = valExp(env);
+		if (val.evalNode().v != null)
+			env.bind(var, val.evalNode().v);
+		else
+			env.bind(var, val.evalNode().vArr);
 	}
 	
 	//‘When’ <boolExp> ‘do’ <voidExp>+ ‘.’
@@ -67,9 +84,9 @@ public class Parser {
 		Node l = boolExp(env);
 		accept(Atom.doKw);
 		List<Node> r = new LinkedList<Node>();
-		r.add(voidExp(env));
-			for (Node rr = voidExp(env); ; rr = voidExp(env))
-				r.add(rr);
+		//r.add(voidExp(env));
+			//for (Node rr = voidExp(env); ; rr = voidExp(env))
+			//	r.add(rr);
 		root = new StartNode(l, r.toArray(new Node [r.size()]), env);
 		//assignExp(env);
 	}
@@ -148,23 +165,112 @@ public class Parser {
 	
 	
 //<valExp> -> <literal> <valExp'>
-//	| <variable> <valExp'>
+	
 //	| <variable>  <sNumOp> 	<valExp'>				  <-------<sNumExp> 
 //	| <variable> ‘=’ <valExp> <valExp'> 	          <-------<assignExp> 
+//	| <variable> <valExp'>
+	
 //	| ‘(‘ <typeName> ‘)’ <valExp> <valExp'>		      <-------<cast> 
-//	| ‘(‘ <valExp> <boolOp> <valExp> ‘)’ |   ‘!’ <valExp> <valExp'><--------<boolExp> 
+//	| ‘(‘ <valExp> <boolOp> <valExp> ‘)’ |   ‘!’ <valExp> <valExp'> <--------<boolExp> 
 //	| <typeName> ‘(‘ <valExp> (‘,’ <valExp> )* ‘)’ <valExp'>	    <------<constrUse>  
-//	|<funcCall> <valExp'>
+//	| <funcCall> <valExp'>
 	private Node valExp(Environment env) throws Exception {
 		Token l = literal();
-		if (l != null)
-			return new LiteralNode(l.getValue(), l.getValue().getClass());
+		if (l != null) {
+			Node n = new LiteralNode(l.getValue(), l.getValue().getClass());
+			return valExpPrim(n, env);
+		}
 		String t = variable(env);
 		if (!"".equals(t)) {
-			Token sign;
-			if ((sign = sNumOp()) != null)
-				return new LiteralNode(l.getValue(), l.getValue().getClass());
+			Token op;
+			if ((op = sNumOp()) != null) {
+				Node cur = null;
+				switch (op.getAtom()) {
+				case doublePlus:
+					cur = new SelfAdditionNode(t, env);
+					break;
+				case doubleMinus:
+					cur = new SelfSubstractionNode(t, env);
+					break;
+				}
+				return valExpPrim(cur, env);	
+			}
+			return valExpPrim(new VariableNode(t, env), env);
 		}
+//		| ‘(‘ <typeName> ‘)’ <valExp> <valExp'>		      <-------<cast> 
+//		| ‘(‘ <valExp> <boolOp> <valExp> ‘)’ <valExp'> 	  <-----<boolExp> 
+		if (maybe(Atom.lParent)) {
+			Atom type = typeName();
+			if (type != null) {
+				accept(Atom.rParent);
+				Node nr = valExp(env);
+				return valExpPrim(nr, env);
+			}
+			Node nl = valExp(env);
+			Token op = boolOp();
+			Node nr = valExp(env);
+			accept(Atom.rParent);
+			return op.getAtom()==Atom.andKw?new BoolAndNode(nl, nr, env):new BoolOrNode(nl, nr, env);
+		}
+//		| <typeName> ‘(‘ <valExp> (‘,’ <valExp> )* ‘)’ <valExp'>	    <------<constrUse>  
+//		| <funcCall> <valExp'>
+//		| ‘!’ <valExp> <valExp'> <--------<boolExp> 
+		return null;
+	}
+	
+	
+//<valExp'> -> 
+//	|  <doubOp> <valExp> <valExp'>					  <-------<arytmExp> 
+//	|  <compOp> <valExp> <valExp'>					  <-------<compExp>
+//	|  ϵ
+	private Node valExpPrim(Node left, Environment env) throws Exception {
+		Token op = doubOp();
+		if (op != null) {
+			Node r = valExp(env);
+			Node cur = null;
+			switch (op.getAtom()) {
+			case plusOp:
+				cur = new AdditionNode(left, r, env);
+				break;
+			case minusOp:
+				cur = new SubstractionNode(left, r, env);
+				break;
+			case divOp:
+				cur = new DivNode(left, r, env);
+				break;
+			case multOp:
+				cur = new MultiplicationNode(left, r, env);
+				break;
+			}
+			return valExpPrim(cur, env);
+		}
+		op = compOp();
+		if (op != null) {
+			Node r = valExp(env);
+			Node cur = null;
+			switch (op.getAtom()) {
+			case equalsOp:
+				cur = new EqualsNode(left, r, env);
+				break;
+			case notEqual:
+				cur = new NotEqualNode(left, r, env);
+				break;
+			case lessEquals:
+				cur = new LessEqualsNode(left, r, env);
+				break;
+			case lessThan:
+				cur = new LessThanNode(left, r, env);
+				break;
+			case moreEquals:
+				cur = new MoreEqualsNode(left, r, env);
+				break;
+			case moreThan:
+				cur = new MoreThanNode(left, r, env);
+				break;
+			}
+			return valExpPrim(cur, env);
+		}
+		return left;
 	}
 	
 	private Token literal() throws Exception {
@@ -198,6 +304,52 @@ public class Parser {
 		return null;
 	}
 	
+	//<compOp> -> ‘==’ | ‘>=’ | ‘>’ | ‘<’ | ‘<=’ | ‘!=’
+	private Token compOp() throws Exception {
+		if (currToken.getAtom() == Atom.equalsOp ||
+			currToken.getAtom() == Atom.lessEquals ||
+			currToken.getAtom() == Atom.lessThan ||
+			currToken.getAtom() == Atom.moreEquals ||
+			currToken.getAtom() == Atom.moreThan ||
+			currToken.getAtom() == Atom.notEqual) {
+			Token thisToken = currToken;
+			currToken = scan.nextToken();
+			return thisToken;
+		}
+		return null;
+	}
+	
+	//‘+’ | ‘-’ | ‘*’ | ‘+=’ | '-=' | '/'
+	private Token doubOp() throws Exception {
+		if (currToken.getAtom() == Atom.plusOp ||
+			currToken.getAtom() == Atom.minusOp ||
+			currToken.getAtom() == Atom.multOp ||
+			currToken.getAtom() == Atom.divOp ||
+			currToken.getAtom() == Atom.plusBecomes ||
+			currToken.getAtom() == Atom.minusBecomes) {
+			Token thisToken = currToken;
+			currToken = scan.nextToken();
+			return thisToken;
+		}
+		return null;
+	}
+	
+	Atom typeName() {
+		if (currToken.getAtom() == Atom.typeInt ||
+				currToken.getAtom() == Atom.typeDouble ||
+				currToken.getAtom() == Atom.typeString ||
+				currToken.getAtom() == Atom.typeBool ||
+				currToken.getAtom() == Atom.typeTime ||
+				currToken.getAtom() == Atom.typeDatetime ||
+				currToken.getAtom() == Atom.typeLocation ||
+				currToken.getAtom() == Atom.typeWeather ||
+				currToken.getAtom() == Atom.typeNetInfo) {
+			Token thisToken = currToken;
+			currToken = scan.nextToken();
+			return thisToken.getAtom();
+		}
+		return null;	
+	}
 
 //	//<annotation> -> '@' (<startAnno> | <everyAnno>)
 //	private Token annotation() throws Exception {
