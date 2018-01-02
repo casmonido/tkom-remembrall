@@ -6,11 +6,13 @@ import java.util.LinkedList;
 import java.util.List;
 
 import remembrall.nodes.AdditionNode;
+import remembrall.nodes.AssignExpNode;
 import remembrall.nodes.BoolAndNode;
 import remembrall.nodes.BoolNotNode;
 import remembrall.nodes.BoolOrNode;
 import remembrall.nodes.DivNode;
 import remembrall.nodes.EqualsNode;
+import remembrall.nodes.IfNode;
 import remembrall.nodes.LessEqualsNode;
 import remembrall.nodes.LessThanNode;
 import remembrall.nodes.LiteralNode;
@@ -19,6 +21,8 @@ import remembrall.nodes.MoreThanNode;
 import remembrall.nodes.MultiplicationNode;
 import remembrall.nodes.Node;
 import remembrall.nodes.NotEqualNode;
+import remembrall.nodes.RepeatNode;
+import remembrall.nodes.ReturnNode;
 import remembrall.nodes.SelfAdditionNode;
 import remembrall.nodes.SelfSubstractionNode;
 import remembrall.tokens.DoubleToken;
@@ -78,28 +82,124 @@ public class Parser {
 	}
 	
 	//‘When’ <boolExp> ‘do’ <voidExp>+ ‘.’
-	void start() throws Exception {
+	public void start() throws Exception {
 		Environment env = new Environment();
 		accept(Atom.whenKw);
 		Node l = boolExp(env);
 		accept(Atom.doKw);
-		List<Node> r = new LinkedList<Node>();
-		//r.add(voidExp(env));
-			//for (Node rr = voidExp(env); ; rr = voidExp(env))
-			//	r.add(rr);
-		root = new StartNode(l, r.toArray(new Node [r.size()]), env);
-		//assignExp(env);
+		Node valEx = valExp(env);
+		Node voidEx = voidExp(env);
+		List<Node> list = new LinkedList<Node>();
+		while (valEx != null || voidEx != null) {
+			if (valEx != null)
+				list.add(valEx);
+			if (voidEx != null)
+				list.add(voidEx);
+			valEx = valExp(env);
+			voidEx = voidExp(env);	
+		}
+		root = new StartNode(l, list.toArray(new Node [list.size()]), env);
+	}
+	
+	//<voidExp> -> <ifExp> | <repExp> | <retExp> | <procedureCall>
+	Node voidExp(Environment env) throws Exception {
+		Node n = ifExp(env);
+		if (n != null)
+			return n;
+		n = repExp(env);
+		if (n != null)
+			return n;
+		n = retExp(env);
+		if (n != null)
+			return n;
+		//procedureCall
+		return null;
+	}
+	
+	//<retExp> -> ‘return’ <valExp>
+	public Node retExp(Environment env) throws Exception {
+		if (maybe(Atom.returnKw)) {
+			Node n = valExp(env);
+			return new ReturnNode(n, env);
+		}
+		return null;
+	}
+	
+	//<repExp> -> ‘repeat’ ‘(‘ <valExp> ‘)’ ‘(‘ (<valExp> | <voidExp>)* ‘)’
+	public Node repExp(Environment env) throws Exception {
+		if (maybe(Atom.repeatKw)) {
+			accept(Atom.lParent);
+			Node n = valExp(env);
+			accept(Atom.rParent);
+			accept(Atom.lParent);
+			Node valEx = valExp(env);
+			Node voidEx = voidExp(env);
+			List<Node> list = new LinkedList<Node>();
+			while (valEx != null && voidEx != null) {
+				if (valEx != null)
+					list.add(valEx);
+				if (voidEx != null)
+					list.add(voidEx);
+				valEx = valExp(env);
+				voidEx = voidExp(env);	
+			}
+			accept(Atom.rParent);
+			return new RepeatNode(valEx, list, env);
+		}
+		return null;
+	}
+	
+	//<ifExp> -> ‘if’ <valExp> ‘(’ (<valExp> | <voidExp>)* ‘)’ [ ‘else’ ‘(’ (<valExp> | <voidExp> )* ‘)’ ]
+	Node ifExp(Environment env) throws Exception {
+		if (maybe(Atom.ifKw)) {
+			Node warunek = valExp(env);
+			accept(Atom.lParent);
+			List<Node> list = new LinkedList<Node>();
+			Node valEx = valExp(env);
+			Node voidEx = voidExp(env);
+			List<Node> elseList = new LinkedList<Node>();
+			while (valEx != null && voidEx != null) {
+				if (valEx != null)
+					list.add(valEx);
+				if (voidEx != null)
+					list.add(voidEx);
+				valEx = valExp(env);
+				voidEx = voidExp(env);	
+			}
+			accept(Atom.rParent);
+			if (maybe(Atom.elseKw)) {
+				//‘else’ ‘(’ (<valExp> | <voidExp> )* ‘)’
+				accept(Atom.lParent);
+				valEx = valExp(env);
+				voidEx = voidExp(env);
+				while (valEx != null && voidEx != null) {
+					if (valEx != null)
+						list.add(valEx);
+					if (voidEx != null)
+						elseList.add(voidEx);
+					valEx = valExp(env);
+					voidEx = voidExp(env);	
+				}
+				accept(Atom.rParent);
+			}
+			return new IfNode(warunek, list, elseList, env);
+		}
+		return null;
 	}
 	
 	
-	//<boolExp> -> ‘(‘ <valExp> <boolOp> <valExp> ‘)’ |   ‘!’ <valExp>
+	//<boolExp> -> ‘(‘ <valExp> [<boolOp> <valExp>] ‘)’ |   ‘!’ <valExp>
 	Node boolExp(Environment env) throws Exception {
 		if (maybe(Atom.lParent)) {
 			Node l = valExp(env);
 			Token t = boolOp();
-			Node r = valExp(env);
+			if (t != null) {
+				Node r = valExp(env);
+				accept(Atom.rParent);
+				return t.getAtom()==Atom.andKw?new BoolAndNode(l, r, env):new BoolOrNode(l, r, env);
+			}
 			accept(Atom.rParent);
-			return t.getAtom()==Atom.andKw?new BoolAndNode(l, r, env):new BoolOrNode(l, r, env);
+			return l;
 		}
 		accept(Atom.notOp);
 		Node l = valExp(env);
@@ -119,7 +219,9 @@ public class Parser {
 
 	//<variable> ::=   <identifier> <variable'>
 	private String variable(Environment env) throws Exception {
-		String s = (String)accept(Atom.identifier).getValue();
+		Token t = accept(Atom.identifier);
+		if (t == null) return null;
+		String s = (String) t.getValue();
 		s += variablePrim(env);
 		return s;
 	}
@@ -181,10 +283,13 @@ public class Parser {
 			return valExpPrim(n, env);
 		}
 		String t = variable(env);
+//		| <variable>  <sNumOp> 	<valExp'>				  <-------<sNumExp> 
+//		| <variable> ‘=’ <valExp> <valExp'> 	          <-------<assignExp> 
+//		| <variable> <valExp'>
 		if (!"".equals(t)) {
 			Token op;
+			Node cur = null;
 			if ((op = sNumOp()) != null) {
-				Node cur = null;
 				switch (op.getAtom()) {
 				case doublePlus:
 					cur = new SelfAdditionNode(t, env);
@@ -192,6 +297,11 @@ public class Parser {
 				case doubleMinus:
 					cur = new SelfSubstractionNode(t, env);
 					break;
+				}
+				if (maybe(Atom.becomesOp)) {
+					Node ll = valExp(env);
+					Node r = valExpPrim(ll, env);
+					return new AssignExpNode(new VariableNode(t, env), r, env);
 				}
 				return valExpPrim(cur, env);	
 			}

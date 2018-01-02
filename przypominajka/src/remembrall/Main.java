@@ -16,7 +16,7 @@ public class Main {
 		Parser parser = new Parser(filePath);
 		Environment env = new Environment();
 		try {
-			parser.assignExp(env);
+			parser.start();
 			IdentValue t = env.resolve("i");
 			if (t.v != null)
 				System.out.println(t.v);
@@ -24,12 +24,11 @@ public class Main {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		Map<String, Object> identTable = new HashMap<String, Object>(5);
-		identTable.put("s", new A());
-		System.out.println(((A)identTable.get("s")).a + " " + ((A)identTable.get("s")).s );
-		((A)identTable.get("s")).s = 6;
-		System.out.println(((A)identTable.get("s")).a + " " + ((A)identTable.get("s")).s );
-		
+//		Map<String, Object> identTable = new HashMap<String, Object>(5);
+//		identTable.put("s", new A());
+//		System.out.println(((A)identTable.get("s")).a + " " + ((A)identTable.get("s")).s );
+//		((A)identTable.get("s")).s = 6;
+//		System.out.println(((A)identTable.get("s")).a + " " + ((A)identTable.get("s")).s );
 	}
 
 }
