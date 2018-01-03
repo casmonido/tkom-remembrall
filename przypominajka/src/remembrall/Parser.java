@@ -10,8 +10,10 @@ import remembrall.nodes.AssignExpNode;
 import remembrall.nodes.BoolAndNode;
 import remembrall.nodes.BoolNotNode;
 import remembrall.nodes.BoolOrNode;
+import remembrall.nodes.ConstrNode;
 import remembrall.nodes.DivNode;
 import remembrall.nodes.EqualsNode;
+import remembrall.nodes.FuncCallName;
 import remembrall.nodes.IfNode;
 import remembrall.nodes.LessEqualsNode;
 import remembrall.nodes.LessThanNode;
@@ -36,7 +38,7 @@ import remembrall.nodes.VariableNode;
 
 public class Parser {
 	private Token currToken;
-	private Scan scan;
+	private ScanInterface scan;
 	private Node root;
 	
 
@@ -59,20 +61,17 @@ public class Parser {
 		return false;
 	}
 
-	public Parser(String filePath) {
-		try {
-			scan = new Scan(new Source(filePath));
-			currToken = scan.nextToken();
-		} catch (FileNotFoundException | UnsupportedEncodingException e) {
-			System.out.println("Błąd: nie udało się otworzeć pliku źródłowego.");
-			return;
-		}
+	public Parser(ScanInterface sc) {
+		scan = sc;
+		currToken = scan.nextToken();
 	}
 	
 	//<collectionDecl> -> <identifier> (  ‘:’ <collectionType> ) 
 	//					| ( ‘=’  ‘[‘ <lit> (‘,’ <lit>)* ‘]’  )
 	void collectionDecl(Environment env) throws Exception {
 		String var = variable(env);
+		if (var == null || "".equals(var))
+			return;
 		accept(Atom.becomesOp);
 		Node val = valExp(env);
 		if (val.evalNode().v != null)
@@ -98,6 +97,7 @@ public class Parser {
 			valEx = valExp(env);
 			voidEx = voidExp(env);	
 		}
+		accept(Atom.dotOp);
 		root = new StartNode(l, list.toArray(new Node [list.size()]), env);
 	}
 	
@@ -112,8 +112,25 @@ public class Parser {
 		n = retExp(env);
 		if (n != null)
 			return n;
-		//procedureCall
+		n = procedureCall(env);
+		if (n != null)
+			return n;
 		return null;
+	}
+	
+	//<procedureCall> -> <procedureName> ‘(‘ <valExp> (‘,’ <valExp> )* ‘)’
+	private Node procedureCall(Environment env) throws Exception {
+		Token id = accept(Atom.identifier);
+		if (id == null) return null;
+		List<Node> args = new LinkedList<Node>();
+		accept(Atom.lParent);
+		Node n = valExp(env);
+		while (n != null) {
+			args.add(n);
+			n = valExp(env);
+		}
+		accept(Atom.rParent);
+		return new FuncCallName((String)id.getValue(), args, env);
 	}
 	
 	//<retExp> -> ‘return’ <valExp>
@@ -126,8 +143,12 @@ public class Parser {
 	}
 	
 	//<repExp> -> ‘repeat’ ‘(‘ <valExp> ‘)’ ‘(‘ (<valExp> | <voidExp>)* ‘)’
+	//			| 'repeatUntil' ‘(‘ <valExp> ‘)’ ‘(‘ (<valExp> | <voidExp>)* ‘)’
 	public Node repExp(Environment env) throws Exception {
-		if (maybe(Atom.repeatKw)) {
+		Token rep = accept(Atom.repeatKw);
+		if (rep == null)
+			rep = accept(Atom.repeatUntilKw);
+		if (rep != null) {
 			accept(Atom.lParent);
 			Node n = valExp(env);
 			accept(Atom.rParent);
@@ -211,6 +232,8 @@ public class Parser {
 	//<assignExp> -> <variable> ‘=’ <valExp>
 	void assignExp(Environment env) throws Exception {
 		String var = variable(env);
+		if (var == null || "".equals(var))
+			return;
 		accept(Atom.becomesOp);
 		Node val = valExp(env);
 		env.bind(var, val.evalNode().v);
@@ -220,7 +243,7 @@ public class Parser {
 	//<variable> ::=   <identifier> <variable'>
 	private String variable(Environment env) throws Exception {
 		Token t = accept(Atom.identifier);
-		if (t == null) return null;
+		if (t == null) return "";
 		String s = (String) t.getValue();
 		s += variablePrim(env);
 		return s;
@@ -250,6 +273,8 @@ public class Parser {
 	//<attribute> ::= <variable> (‘.’ <variable> )+
 	private String attribute(Environment env) throws Exception {
 		String s = variable(env);
+		if (s == null || "".equals(s))
+			return "";
 		while (maybe(Atom.dotOp)) {
 			s += "." + variable(env);	
 		}
@@ -277,6 +302,9 @@ public class Parser {
 //	| <typeName> ‘(‘ <valExp> (‘,’ <valExp> )* ‘)’ <valExp'>	    <------<constrUse>  
 //	| <funcCall> <valExp'>
 	private Node valExp(Environment env) throws Exception {
+		Node xxx = procedureCall(env);
+		if (xxx != null)
+			return valExpPrim(xxx, env);
 		Token l = literal();
 		if (l != null) {
 			Node n = new LiteralNode(l.getValue(), l.getValue().getClass());
@@ -286,7 +314,8 @@ public class Parser {
 //		| <variable>  <sNumOp> 	<valExp'>				  <-------<sNumExp> 
 //		| <variable> ‘=’ <valExp> <valExp'> 	          <-------<assignExp> 
 //		| <variable> <valExp'>
-		if (!"".equals(t)) {
+//		| <funcCall> <valExp'>
+		if (t != null && !"".equals(t)) {
 			Token op;
 			Node cur = null;
 			if ((op = sNumOp()) != null) {
@@ -298,12 +327,12 @@ public class Parser {
 					cur = new SelfSubstractionNode(t, env);
 					break;
 				}
-				if (maybe(Atom.becomesOp)) {
-					Node ll = valExp(env);
-					Node r = valExpPrim(ll, env);
-					return new AssignExpNode(new VariableNode(t, env), r, env);
-				}
-				return valExpPrim(cur, env);	
+				return valExpPrim(cur, env);
+			}
+			if (maybe(Atom.becomesOp)) {
+				Node ll = valExp(env);
+				Node r = valExpPrim(ll, env);
+				return new AssignExpNode(new VariableNode(t, env), r, env);
 			}
 			return valExpPrim(new VariableNode(t, env), env);
 		}
@@ -322,9 +351,36 @@ public class Parser {
 			accept(Atom.rParent);
 			return op.getAtom()==Atom.andKw?new BoolAndNode(nl, nr, env):new BoolOrNode(nl, nr, env);
 		}
+		Node fc = procedureCall(env);
+		if (fc != null)
+			return valExpPrim(fc, env);
+		if (maybe(Atom.notOp)) {
+			accept(Atom.notOp);
+			fc = valExp(env);
+			Node xx = new BoolNotNode(fc, env);
+			return valExpPrim(xx, env);
+		}
+		if ((fc = constrUse(env)) != null)
+			return valExpPrim(fc, env);
 //		| <typeName> ‘(‘ <valExp> (‘,’ <valExp> )* ‘)’ <valExp'>	    <------<constrUse>  
-//		| <funcCall> <valExp'>
 //		| ‘!’ <valExp> <valExp'> <--------<boolExp> 
+		return null;
+	}
+	
+	//<typeName> ‘(‘ <valExp> (‘,’ <valExp> )* ‘)’
+	private Node constrUse(Environment env) throws Exception {
+		Atom t = typeName();
+		if (t != null) {
+			List<Node> args = new LinkedList<Node>();
+			accept(Atom.lParent);
+			Node n = valExp(env);
+			while (n != null) {
+				args.add(n);
+				n = valExp(env);
+			}
+			accept(Atom.rParent);
+			return new ConstrNode(t, args, env);
+		}
 		return null;
 	}
 	
@@ -385,7 +441,8 @@ public class Parser {
 	
 	private Token literal() throws Exception {
 		if (currToken instanceof DoubleToken ||
-			currToken instanceof StringToken ||
+			(currToken instanceof StringToken &&
+			currToken.getAtom() != Atom.identifier) ||
 			currToken instanceof IntToken) {
 			Token thisToken = currToken;
 			currToken = scan.nextToken();

@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import remembrall.tokens.*;
 
-public class Scan {
+public class Scan implements ScanInterface {
 	
 	private Source src;
 	private int curChar = -1;
