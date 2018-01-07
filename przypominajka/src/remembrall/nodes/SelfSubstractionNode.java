@@ -5,10 +5,14 @@ import remembrall.IdentValue;
 
 public class SelfSubstractionNode implements Node {
 	String ident;
+	String attr;
+	Node valNode;
 	Environment env;
 	
-	public SelfSubstractionNode(String ident, Environment e) {
+	public SelfSubstractionNode(String ident, Node n, String attr, Environment e) {
 		this.ident = ident;
+		this.attr = attr;
+		this.valNode = n;
 		this.env = e;
 	}
 

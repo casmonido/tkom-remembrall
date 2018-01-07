@@ -12,7 +12,5 @@ public class IdentValue {
 	
 	public IdentValue(Object [] vA) {
 		this.vArr = vA;
-	}
-	
-	
+	}	
 }

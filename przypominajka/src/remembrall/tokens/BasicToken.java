@@ -8,7 +8,6 @@ public class BasicToken implements Token {
 		private Atom atom;
 		private TextPos position;
 		
-		private BasicToken() {};
 		public BasicToken(Atom a, TextPos tp) {
 			atom = a;
 			position = tp;
@@ -17,11 +16,13 @@ public class BasicToken implements Token {
 		public Atom getAtom() {
 			return atom;
 		}
+		
 		public TextPos getTextPos() {
 			return position;
 		}
+		
 		public Object getValue() {
-			return "";
+			return null;
 		}
 		
 		public String toString() {

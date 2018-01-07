@@ -1,0 +1,19 @@
+double averagePrecipitationDuringDay(loc, day) (
+sum = 0 repeats = 10
+day.hour = 8
+repeat(repeats) (
+sum += getWeatherForecast(loc, day)
+day.hour++
+)
+return sum / repeats 
+)
+
+alarmTime = time(5, 45)
+When getCurrentTime() == alarmTime and averagePrecipitationDuringDay(localization("Łódź", "02-115', 'Polska'), datetime(2017, 11, 2, 9)) <= 0.1
+do
+i = 4
+repeat(3) (
+switchOnAlarm('jigsaw-falling-into-place", i)
+i++
+sleep(5*60)
+).

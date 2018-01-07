@@ -9,6 +9,11 @@ public class ErrorTracker {
 		System.out.println(startPos.toString() + ": " + errorMsg);
 	}
 	
+	public void parseError(String errorMsg) {
+		totalErrors++;
+		System.out.println(errorMsg);
+	}
+	
 	public int getErrorsNum() {
 		return totalErrors;
 	}

@@ -5,13 +5,17 @@ import remembrall.IdentValue;
 
 public class SelfAdditionNode implements Node {
 	String ident;
+	String attr;
+	Node valNode;
 	Environment env;
 	
-	public SelfAdditionNode(String ident, Environment e) {
+	public SelfAdditionNode(String ident, Node n, String attr, Environment e) {
 		this.ident = ident;
+		this.attr = attr;
+		this.valNode = n;
 		this.env = e;
 	}
-
+	
 	@Override
 	public IdentValue evalNode() throws Exception {
 		Object l = env.resolve(ident);

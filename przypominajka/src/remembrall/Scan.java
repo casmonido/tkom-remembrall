@@ -220,12 +220,12 @@ public class Scan implements ScanInterface {
 			nextChar();
 		} 
 		Atom at = keywords.get(identifier);
-		if (at != null)
+		if (at != null) 
+			 //m.in. nullKw, nonImportantKw, falseKw, trueKw
 			return new BasicToken(at, atomStart);
 		else 
 			return new StringToken(Atom.identifier, atomStart, identifier);
 	}
-	
 	
 	private boolean isWhitespace(int cChar) {
 		if ((cChar > 0 && cChar < 33) || cChar == 127)

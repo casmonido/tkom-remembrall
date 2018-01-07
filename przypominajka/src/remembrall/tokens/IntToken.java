@@ -14,7 +14,7 @@ public class IntToken extends BasicToken {
 	
 	public IntToken(Atom a, TextPos tp, Integer v) {
 		super(a, tp);
-		value = v.longValue();
+		value = new Long(v);
 	}
 	
 	@Override

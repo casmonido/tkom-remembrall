@@ -6,18 +6,23 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import remembrall.nodes.Node;
+
 
 public class Environment {
 
 	Map<String, Object> identTable = new HashMap<String, Object>(5);
 	Map<String, Object []> arrTable = new HashMap<String, Object []>(5);
-	// ident, object []
 	
-	public Environment() {	}
+	public Environment() {}
 	
-	public void bind(String s, Object t) {
-		
-		identTable.put(s, t);
+	public Environment(Environment env) {
+		identTable.putAll(env.identTable);
+		arrTable.putAll(env.arrTable);
+	}
+	
+	public void bind(String s, Object v) {
+		identTable.put(s, v);
 	}
 	
 	public void bindArr(String s, Object [] t) {
@@ -28,10 +33,9 @@ public class Environment {
 	// a.i
 	// a[2]
 	// a[2].e
-	public IdentValue resolve(String s) {
+	public IdentValue resolve(String s, Node num, String attr) {
 		String mainIdent = s;
 		int arrPos = -1;
-		String attr = "";
 		Pattern ident_attr = Pattern.compile("(.*)\\.(.*)"); 
 		Matcher m = ident_attr.matcher(s);
 		if (m.matches()) {

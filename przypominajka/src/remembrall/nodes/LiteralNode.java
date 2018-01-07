@@ -5,11 +5,9 @@ import remembrall.IdentValue;
 public class LiteralNode implements Node {
 
 	protected Object value;
-	protected Object type;
 	
-	public LiteralNode(Object v, Object t) {
+	public LiteralNode(Object v) {
 		value = v;
-		type = t;
 	}
 
 	@Override

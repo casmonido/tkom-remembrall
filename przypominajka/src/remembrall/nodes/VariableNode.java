@@ -5,11 +5,17 @@ import remembrall.IdentValue;
 
 public class VariableNode implements Node {
 	protected String ident;
+	protected String attrib;
+	protected Node numVal;
 	protected Environment env;
 	
-	public VariableNode(String i, Environment e) {
+	
+
+	public VariableNode(String i, Node v, String a, Environment e) {
 		ident = i;
+		attrib = a;
 		env = e;
+		numVal = v;
 	}
 
 	@Override
