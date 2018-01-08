@@ -10,7 +10,7 @@ public class MultiplicationNode extends ArythmeticNode {
 	}
 
 	@Override
-	public IdentValue evalNode() throws Exception {
+	public IdentValue evalNode() throws remembrall.exceptions.RuntimeException {
 		Object l = left.evalNode().v;
 		Object r = right.evalNode().v;
 		if (l instanceof Long && r instanceof Long)

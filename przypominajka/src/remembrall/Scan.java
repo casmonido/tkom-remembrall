@@ -10,12 +10,13 @@ public class Scan implements ScanInterface {
 	private int curChar = -1;
 	private HashMap<String, Atom> keywords = new HashMap<String, Atom>(25);
 	private TextPos atomStart;
-	private ErrorTracker errTracker = new ErrorTracker();
+	private ErrorTracker errTracker;
 
 	
-	public Scan(Source src) {
+	public Scan(Source src, ErrorTracker errTr) {
 		initKeywords();
 		this.src = src;
+		errTracker = errTr;
 		nextChar();
 	}
 	
@@ -169,6 +170,9 @@ public class Scan implements ScanInterface {
 		case '@':
 			nextChar();
 			return new BasicToken(Atom.atOp, atomStart);
+		case ':':
+			nextChar();
+			return new BasicToken(Atom.colonOp, atomStart);
 		}
 		errTracker.scanError(atomStart, "Nierozpoznany znak: " + (char) curChar);
 		nextChar(); 

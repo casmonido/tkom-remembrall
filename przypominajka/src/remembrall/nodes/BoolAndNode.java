@@ -2,6 +2,7 @@ package remembrall.nodes;
 
 import remembrall.Environment;
 import remembrall.IdentValue;
+import remembrall.exceptions.RuntimeException;
 
 public class BoolAndNode implements Node {
 
@@ -16,7 +17,7 @@ public class BoolAndNode implements Node {
 	}
 
 	@Override
-	public IdentValue evalNode() throws Exception {
+	public IdentValue evalNode() throws RuntimeException {
 		return new IdentValue(((boolean) left.evalNode().v) &&
 				((boolean) right.evalNode().v));
 	}

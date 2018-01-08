@@ -5,12 +5,12 @@ import java.util.List;
 import remembrall.Environment;
 import remembrall.IdentValue;
 
-public class RepeatNode implements Node {
+public class RepeatUntilNode implements Node {
 	protected Node left;
 	protected List<Node> right;
 	protected Environment env;
 	
-	public RepeatNode(Node l, List<Node> r, Environment e) {
+	public RepeatUntilNode(Node l, List<Node> r, Environment e) {
 		left = l;
 		right = r;
 		env = e;
@@ -18,7 +18,7 @@ public class RepeatNode implements Node {
 
 	@Override
 	public IdentValue evalNode() throws remembrall.exceptions.RuntimeException {
-		while ((int)left.evalNode().v > 0)
+		while ((boolean)left.evalNode().v == true)
 			for (Node r : right)
 				r.evalNode();
 		return null;

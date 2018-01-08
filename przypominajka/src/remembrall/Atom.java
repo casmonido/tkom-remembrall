@@ -22,7 +22,7 @@ public enum Atom {
 	whenKw,
 	doKw,
 	everyKw,
-	startKw,		
+	startKw,
 	inclKw,
 	nullKw,
 	nonImportantKw,
@@ -32,6 +32,7 @@ public enum Atom {
 	doubleConst,
 	stringConst,
 	
+	colonOp, // :
 	doublePlus, //++
 	plusBecomes, // +=
 	plusOp, //+

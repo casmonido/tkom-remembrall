@@ -11,7 +11,7 @@ public class FunctionCallNode implements Node {
 	}
 
 	@Override
-	public IdentValue evalNode() throws Exception {
+	public IdentValue evalNode() {
 		// TODO Auto-generated method stub
 		return null;
 	}

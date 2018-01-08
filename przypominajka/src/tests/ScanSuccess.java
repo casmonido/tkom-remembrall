@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
 
+import remembrall.ErrorTracker;
 import remembrall.Scan;
 import remembrall.Source;
 
@@ -15,7 +16,7 @@ public class ScanSuccess {
 	@Before
 	public void setUp() throws Exception {
 		scan = new Scan(
-				new Source("../przypominajka/testPrograms/sourceTestLineCounting"));	
+				new Source("../przypominajka/testPrograms/sourceTestLineCounting"), new ErrorTracker());	
 	}
 
 	@Test

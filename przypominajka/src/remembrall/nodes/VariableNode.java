@@ -1,27 +1,47 @@
 package remembrall.nodes;
 
+import java.lang.reflect.Field;
+
 import remembrall.Environment;
 import remembrall.IdentValue;
 
 public class VariableNode implements Node {
-	protected String ident;
-	protected String attrib;
-	protected Node numVal;
-	protected Environment env;
-	
-	
+	public String ident;
+	public String attrib;
+	public Node numVal;
+	public Environment env;
 
 	public VariableNode(String i, Node v, String a, Environment e) {
 		ident = i;
 		attrib = a;
-		env = e;
 		numVal = v;
+		env = e;
 	}
 
+
 	@Override
-	public IdentValue evalNode() {
-		if (env.resolve(ident).v != null)
-			return new IdentValue(env.resolve(ident).v);
-		return new IdentValue(env.resolve(ident).vArr);
+	public IdentValue evalNode() throws remembrall.exceptions.RuntimeException { 
+		IdentValue objVal = env.resolve(ident);
+		Object obj = null;
+		if (numVal != null)
+			obj = objVal.vArr[(int)numVal.evalNode().v];
+		else
+			obj = (objVal.v==null)?objVal.vArr:objVal.v;
+		if (attrib != null) {
+			Field f = null;
+			try {
+				f = obj.getClass().getDeclaredField(attrib);
+			} catch (NoSuchFieldException e) {
+				throw new RuntimeException("Atrybut nie występuje w obiekcie");
+			} 
+			f.setAccessible(true);
+			try {
+				obj = f.get(obj);
+			} catch (IllegalAccessException e) {
+				// nie powinno sie zdarzyc
+				e.printStackTrace();
+			}
+		}
+		return new IdentValue(obj);
 	}
 }

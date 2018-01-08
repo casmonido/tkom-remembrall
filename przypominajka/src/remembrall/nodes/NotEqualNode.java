@@ -10,7 +10,7 @@ public class NotEqualNode extends ComparisonNode {
 	}
 
 	@Override
-	public IdentValue evalNode() throws Exception {
+	public IdentValue evalNode() throws remembrall.exceptions.RuntimeException {
 		Object l = left.evalNode().v;
 		Object r = right.evalNode().v;
 		if (!l.getClass().isInstance(r.getClass()))

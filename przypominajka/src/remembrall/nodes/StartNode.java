@@ -15,7 +15,7 @@ public class StartNode implements Node {
 	}
 
 	@Override
-	public IdentValue evalNode() throws Exception {
+	public IdentValue evalNode() throws remembrall.exceptions.RuntimeException {
 		if ((boolean)left.evalNode().v == true)
 			for (Node r : right)
 				r.evalNode();

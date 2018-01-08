@@ -5,6 +5,7 @@ import java.util.List;
 import remembrall.Atom;
 import remembrall.Environment;
 import remembrall.IdentValue;
+import remembrall.exceptions.RuntimeException;
 import remembrall.types.Time;
 
 public class ConstrNode implements Node {
@@ -19,7 +20,7 @@ public class ConstrNode implements Node {
 	}
 
 	@Override
-	public IdentValue evalNode() throws Exception { 
+	public IdentValue evalNode() throws RuntimeException { 
 		switch (type) { 
 //		typeDatetime,
 //		typeLocation,

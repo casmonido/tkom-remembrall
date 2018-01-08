@@ -2,6 +2,7 @@ package remembrall.nodes;
 
 import remembrall.Environment;
 import remembrall.IdentValue;
+import remembrall.exceptions.RuntimeException;
 
 public class AdditionNode extends ArythmeticNode {
 
@@ -10,7 +11,7 @@ public class AdditionNode extends ArythmeticNode {
 	}
 
 	@Override
-	public IdentValue evalNode() throws Exception {
+	public IdentValue evalNode() throws RuntimeException {
 		Object l = left.evalNode().v;
 		Object r = right.evalNode().v;
 		if (l instanceof Long && r instanceof Long)

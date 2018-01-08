@@ -2,27 +2,27 @@ package remembrall.nodes;
 
 import remembrall.Environment;
 import remembrall.IdentValue;
+import remembrall.exceptions.RuntimeException;
 
 public class AssignNode implements Node {
-	private String ident;
-	private Node num;
-	private String attrib;
+	private VariableNode var;
 	private Node val;
 	private Environment env;
 
 	
-	public AssignNode(String i, Node n, String a, Node v, Environment e) {
-		this.ident = i;
-		this.num = n;
-		this.attrib = a;
-		this.val = v;
+	public AssignNode(VariableNode var, Node val, Environment e) {
+		this.var = var;
+		this.val = val;
 		this.env = e;
 	}
 	
 	@Override
-	public IdentValue evalNode() throws Exception {
+	public IdentValue evalNode() throws RuntimeException {
 		IdentValue value = val.evalNode();
-		env.bind(ident, num, attrib, value);
+		if (value.v != null)
+			env.bind(var.ident, value.v);
+		else
+			env.bind(var.ident, value.vArr);
 		return value;
 	}
 

@@ -5,7 +5,8 @@ import java.util.List;
 
 import remembrall.exceptions.ParseException;
 import remembrall.nodes.AdditionNode;
-import remembrall.nodes.AssignExpNode;
+import remembrall.nodes.ArrayNode;
+import remembrall.nodes.AssignNode;
 import remembrall.nodes.BoolAndNode;
 import remembrall.nodes.BoolNotNode;
 import remembrall.nodes.BoolOrNode;
@@ -27,12 +28,10 @@ import remembrall.nodes.Node;
 import remembrall.nodes.NotEqualNode;
 import remembrall.nodes.PlusAssignNode;
 import remembrall.nodes.RepeatNode;
+import remembrall.nodes.RepeatUntilNode;
 import remembrall.nodes.ReturnNode;
 import remembrall.nodes.SelfAdditionNode;
 import remembrall.nodes.SelfSubstractionNode;
-import remembrall.tokens.DoubleToken;
-import remembrall.tokens.IntToken;
-import remembrall.tokens.StringToken;
 import remembrall.tokens.Token;
 import remembrall.nodes.StartNode;
 import remembrall.nodes.SubstractionNode;
@@ -106,27 +105,37 @@ public class Parser {
 			skipTo(new Atom [] {Atom.lParent});
 			bin.parseError(pe.getMessage());
 		}
-		Node condition;
-		//try {
+		Node condition = null;
+		try {
 			condition = boolExp(env);
-		//} catch (ParseException pe) {
+		} catch (ParseException pe) {
 			skipTo(new Atom [] {Atom.lParent});
 			bin.parseError(pe.getMessage());
-		//}
-		accept(Atom.doKw);
-		Node valEx = valExp(env);
-		Node voidEx = voidExp(env);
+		}
+		try {
+			accept(Atom.doKw);
+		} catch (ParseException pe) {
+			skipTo(new Atom [] {Atom.dotOp});
+			bin.parseError(pe.getMessage());
+		}
+		Node voidEx, valEx = null;
+		try {valEx = valExp(env);} catch (ParseException pe) {valEx = null;}
+		try {voidEx = voidExp(env);} catch (ParseException pe) {voidEx = null;}	
 		List<Node> list = new LinkedList<Node>();
 		while (valEx != null || voidEx != null) {
 			if (valEx != null)
 				list.add(valEx);
 			if (voidEx != null)
 				list.add(voidEx);
-			valEx = valExp(env);
-			voidEx = voidExp(env);	
+			try {valEx = valExp(env);} catch (ParseException pe) {valEx = null;}
+			try {voidEx = voidExp(env);} catch (ParseException pe) {voidEx = null;}		
 		}
-		accept(Atom.dotOp);
-		root = new StartNode(l, list.toArray(new Node [list.size()]), env);
+		try {
+			accept(Atom.dotOp);
+		} catch (ParseException pe) {
+			bin.parseError(pe.getMessage());
+		}
+		root = new StartNode(condition, list.toArray(new Node [list.size()]), env);
 	}
 	
 	//'include' <fileName>
@@ -146,23 +155,26 @@ public class Parser {
 	}
 	
 	
+//	<collectionType> ::= <typeName> ‘[‘ [<intLit>] ‘]’
+//			<collectionDecl> ::= <variable> ( ‘:’ <collectionType> ) | ( ‘=’  ‘[‘ <literal> (‘,’ <literal>)* ‘]’ ) 
+//	
 	//<collectionDecl> -> <identifier> (  ‘:’ <collectionType> ) 
 	//					| ( ‘=’  ‘[‘ <lit> (‘,’ <lit>)* ‘]’  )
-	void collectionDecl(Environment env) throws ParseException {
-		String var = variable(env);
-		if (var == null || "".equals(var))
-			return;
-		accept(Atom.becomesOp);
-		Node val = valExp(env);
-		if (val.evalNode().v != null)
-			env.bind(var, val.evalNode().v);
-		else
-			env.bind(var, val.evalNode().vArr);
-	}
+//	private void collectionDecl(Environment env) throws ParseException {
+//		String var = variable(env);
+//		if (var == null || "".equals(var))
+//			return;
+//		accept(Atom.becomesOp);
+//		Node val = valExp(env);
+//		if (val.evalNode().v != null)
+//			env.bind(var, val.evalNode().v);
+//		else
+//			env.bind(var, val.evalNode().vArr);
+//	}
 	
 
 	//<voidExp> -> <ifExp> | <repExp> | <retExp> | <procedureCall>
-	Node voidExp(Environment env) throws ParseException {
+	private Node voidExp(Environment env) throws ParseException {
 		Node n = ifExp(env);
 		if (n != null)
 			return n;
@@ -178,175 +190,236 @@ public class Parser {
 		return null;
 	}
 	
-	//<procedureCall> -> <procedureName> ‘(‘ <valExp> (‘,’ <valExp> )* ‘)’
+	//<procedureCall> -> <identifier> ‘(‘ <valExp> (‘,’ <valExp> )* ‘)’
 	private Node procedureCall(Environment env) throws ParseException {
-		Token id = accept(Atom.identifier);
-		if (id == null) return null;
-		List<Node> args = new LinkedList<Node>();
-		accept(Atom.lParent);
-		Node n = valExp(env);
-		while (n != null) {
-			args.add(n);
-			n = valExp(env);
+		Token id = identifier();
+		if (id != null) {
+			accept(Atom.lParent);
+			List<Node> args = new LinkedList<Node>();
+			Node n = null;
+			try {n = valExp(env);} catch (ParseException pe) {n = null;}
+			while (n != null) {
+				args.add(n);
+				if (maybe(Atom.commaOp))
+					break;
+				try {n = valExp(env);} catch (ParseException pe) {n = null;}
+			}
+			accept(Atom.rParent);
+			return new FuncCallName((String)id.getValue(), args, env);
 		}
-		accept(Atom.rParent);
-		return new FuncCallName((String)id.getValue(), args, env);
+		return null;
 	}
 	
 	//<retExp> -> ‘return’ <valExp>
 	public Node retExp(Environment env) throws ParseException {
 		if (maybe(Atom.returnKw)) {
-			Node n = valExp(env);
-			return new ReturnNode(n, env);
+			Node ret = valExp(env);
+			return new ReturnNode(ret, env);
 		}
 		return null;
 	}
 	
 	//<repExp> -> ‘repeat’ ‘(‘ <valExp> ‘)’ ‘(‘ (<valExp> | <voidExp>)* ‘)’
 	//			| 'repeatUntil' ‘(‘ <valExp> ‘)’ ‘(‘ (<valExp> | <voidExp>)* ‘)’
-	public Node repExp(Environment env) throws ParseException {
-		Token rep = accept(Atom.repeatKw);
-		if (rep == null)
-			rep = accept(Atom.repeatUntilKw);
-		if (rep != null) {
+	private Node repExp(Environment env) throws ParseException {
+		Atom repeat = null;
+		Node valEx, voidEx = null;
+		if (maybe(Atom.repeatKw)) 
+			repeat = Atom.repeatKw;
+		else 
+			if (maybe(Atom.repeatUntilKw)) 
+				repeat = Atom.repeatUntilKw;
+		if (repeat != null) {
 			accept(Atom.lParent);
 			Node cond = valExp(env);
 			accept(Atom.rParent);
 			accept(Atom.lParent);
-			Node valEx = valExp(env);
-			Node voidEx = voidExp(env);
+			try {valEx = valExp(env);} catch (ParseException pe) {valEx = null;}
+			voidEx = voidExp(env);
 			List<Node> list = new LinkedList<Node>();
 			while (valEx != null && voidEx != null) {
 				if (valEx != null)
 					list.add(valEx);
 				if (voidEx != null)
 					list.add(voidEx);
-				valEx = valExp(env);
+				try {valEx = valExp(env);} catch (ParseException pe) {valEx = null;}
 				voidEx = voidExp(env);	
 			}
 			accept(Atom.rParent);
-			return new RepeatNode(cond, list, env);
+			return (repeat==Atom.repeatUntilKw)?new RepeatUntilNode(cond, list, env):new RepeatNode(cond, list, env);
 		}
 		return null;
 	}
 	
-	//<ifExp> -> ‘if’ <valExp> ‘(’ (<valExp> | <voidExp>)* ‘)’ [ ‘else’ ‘(’ (<valExp> | <voidExp> )* ‘)’ ]
-	Node ifExp(Environment env) throws ParseException {
+	//‘if’ <valExp> ‘(’ (<valExp> | <voidExp>)* ‘)’ [ ‘else’ ‘(’ (<valExp> | <voidExp> )* ‘)’ ]
+	private Node ifExp(Environment env) throws ParseException {
 		if (maybe(Atom.ifKw)) {
-			Node warunek = valExp(env);
-			accept(Atom.lParent);
-			List<Node> list = new LinkedList<Node>();
-			Node valEx = valExp(env);
-			Node voidEx = voidExp(env);
+			List<Node> ifList = new LinkedList<Node>();
 			List<Node> elseList = new LinkedList<Node>();
-			while (valEx != null && voidEx != null) {
+			Node cond = valExp(env);
+			accept(Atom.lParent);
+			Node valEx, voidEx = null;
+			try {valEx = valExp(env);} catch (ParseException pe) {valEx = null;}
+			voidEx = voidExp(env);
+			while (valEx != null || voidEx != null) {
 				if (valEx != null)
-					list.add(valEx);
+					ifList.add(valEx);
 				if (voidEx != null)
-					list.add(voidEx);
-				valEx = valExp(env);
-				voidEx = voidExp(env);	
+					ifList.add(voidEx);
+				try {valEx = valExp(env);} catch (ParseException pe) {valEx = null;}
+				voidEx = voidExp(env);
 			}
 			accept(Atom.rParent);
 			if (maybe(Atom.elseKw)) {
 				//‘else’ ‘(’ (<valExp> | <voidExp> )* ‘)’
 				accept(Atom.lParent);
-				valEx = valExp(env);
+				try {valEx = valExp(env);} catch (ParseException pe) {valEx = null;}
 				voidEx = voidExp(env);
 				while (valEx != null && voidEx != null) {
 					if (valEx != null)
-						list.add(valEx);
+						ifList.add(valEx);
 					if (voidEx != null)
 						elseList.add(voidEx);
-					valEx = valExp(env);
-					voidEx = voidExp(env);	
+					try {valEx = valExp(env);} catch (ParseException pe) {valEx = null;}
+					voidEx = voidExp(env);
 				}
 				accept(Atom.rParent);
 			}
-			return new IfNode(warunek, list, elseList, env);
+			return new IfNode(cond, ifList, elseList, env);
 		}
 		return null;
 	}
 	
-	
-	//<boolExp> -> ‘(‘ <valExp> [<boolOp> <valExp>] ‘)’ | [‘!’] <valExp>
-	Node boolExp(Environment env) throws ParseException {
+	// ‘(‘ <valExp> [<boolOp> <valExp>] ‘)’ | [‘!’] <valExp>
+	private Node boolExp(Environment env) throws ParseException {
 		if (maybe(Atom.lParent)) {
 			Node l = valExp(env);
-			Token t = boolOp();
-			if (t != null) {
+			Token op = boolOp();
+			if (op != null) {
 				Node r = valExp(env);
 				accept(Atom.rParent);
-				return t.getAtom()==Atom.andKw?new BoolAndNode(l, r, env):new BoolOrNode(l, r, env);
+				return op.getAtom()==Atom.andKw?new BoolAndNode(l, r, env):new BoolOrNode(l, r, env);
 			}
 			accept(Atom.rParent);
 			return l;
 		}
 		accept(Atom.notOp);
 		Node l = valExp(env);
-		return new (l, env);
+		return new BoolNotNode(l, env);
 	}
-	
-	
 
-	//<assignExp> -> <variable> <assignOp> <valExp>
-	Node assignExp(Environment env) throws ParseException {
-		Node var = variable(env);
-		if (var == null || "".equals(var))
-			return;
+	//<assignExp> ::=  <variable> (<assignOp> <valExp>) | (‘:’ <typeName> ‘[‘ [<intLit>] ‘]’)
+	private Node assignExp(Environment env) throws ParseException {
+		VariableNode varNode = variable(env);
+		if (varNode == null)
+			return null;
 		Token op = assignOp();
-		Node val = valExp(env);
-		//env.bind(var, val.evalNode().v);
-	}
-	
-
-	//<identifier> [‘[‘ <valExp> ‘]’] [‘.’ <identifier>]
-	private String variable(Environment env) throws ParseException {
-		Token t = accept(Atom.identifier);
-		if (t == null) return "";
-		String s = (String) t.getValue();
-		s += variablePrim(env);
-		return s;
-	}
-			
-	everyAnno();
-	private void startAnno() {
-		if (!maybe(Atom.atOp))
-			return;
-		if (!)
-	}
-	
-//	[<everyAnno>][<startAnno>] <identifier> ‘(‘ <valExp> (‘,’ <valExp> )* ‘)’
-	private Node funcCall() {
-		everyAnno();
-		startAnno();
-		Environment env = new Environment();
-		Token lit = literal();
-		accept(Atom.lParent);
-		List<Node> args = new LinkedList<Node>();
-		Node n = valExp(env);
-		while (n != null) {
-			args.add(n);
-			if (maybe(Atom.commaOp))
+		if (op != null) {
+			Node val = valExp(env);
+			switch (op.getAtom()) {
+			case becomesOp:
+				return new AssignNode(varNode, val, env);
+			case plusBecomes:
+				return new PlusAssignNode(varNode, val, env);
+			case minusBecomes:
+				return new MinusAssignNode(varNode, val, env);
+			default:
 				break;
-			n = valExp(env);
+			}
 		}
+		if (maybe(Atom.colonOp)) {
+			Token t = typeName();
+			if (t == null) throw new ParseException("Brak typename...");
+			accept(Atom.lBracket);
+			Token intNode = literal();
+			accept(Atom.rBracket);
+			return new ArrayNode((int)intNode.getValue());
+		}
+		return null;
+	}
+	
+	//<identifier> [‘[‘ <valExp> ‘]’] [‘.’ <identifier>]
+	private VariableNode variable(Environment env) throws ParseException {
+		if (currToken.getAtom() == Atom.identifier) {
+			Token tAttr = null, ident = currToken;
+			currToken = scan.nextToken();
+			Node vNode = null;
+			if (maybe(Atom.lBracket)) {
+				vNode = valExp(env);
+				accept(Atom.rBracket);	
+			}
+			if (maybe(Atom.dotOp)) {
+				tAttr = identifier();
+				if (tAttr == null)
+					throw new ParseException("Brak atrybutu");
+			}
+			return new VariableNode((String)ident.getValue(), vNode, (String)tAttr.getValue(), env);
+		}
+		return null;
+	}
+	
+	private boolean annotation() throws ParseException {
+		if (!maybe(Atom.atOp))
+			return false;
+		if (maybe(Atom.everyKw))
+			return everyAnno();
+		else {
+			accept(Atom.startKw);
+			return startAnno();
+		}	
+	}
+	
+//	<everyAnno> ::= <everyKw> ‘(‘ <intLit> ‘)’
+	private boolean everyAnno() throws ParseException {
+		accept(Atom.lParent);
+		if (currToken.getAtom() == Atom.intConst) 
+			currToken = scan.nextToken();
+		else throw new ParseException("Brak parametru w anotacji @every");
 		accept(Atom.rParent);
-		return new FunctionCallNode(functions.resolve((String)lit.getValue()), args);
+		return true;
+	}
+
+//	<startAnno> ::= <startKw>‘(‘ <intLit>, <intLit>, <intLit>, <intLit> ‘)’	
+	private boolean startAnno() throws ParseException {
+		accept(Atom.lParent);
+		for (int i = 0; i < 3; i++) {
+			if (currToken.getAtom() == Atom.intConst) 
+				currToken = scan.nextToken();
+			else throw new ParseException("Brak parametru w anotacji @start");
+			accept(Atom.commaOp);
+		}
+		if (currToken.getAtom() == Atom.intConst) 
+			currToken = scan.nextToken();
+		else throw new ParseException("Brak parametru w anotacji @start");
+		accept(Atom.rParent);
+		return true;
 	}
 
 	private Node valExp(Environment env) throws ParseException {
-//	    <literal> 
-//		| <identifier> [‘[‘ <valExp> ‘]’] [‘.’ <identifier>] <selfNumOp> 
-//		| <identifier> [‘[‘ <valExp> ‘]’] [‘.’ <identifier>] <assignOp> <valExp>
-//		| <identifier> [‘[‘ <valExp> ‘]’] [‘.’ <identifier>] 
+//	      <literal> 
+		Node n = null;
 		Token t = literal();
 		if (t != null)
 			return new LiteralNode(t.getValue());
-		t = identifier(); //poszukaj t.getValue() w liście funkcji
-//		| [<everyAnno>][<startAnno>] <identifier> ‘(‘ <valExp> (‘,’ <valExp> )* ‘)’
+		t = identifier();
 		if (t != null) {
-			Node n = null;
+//		| <identifier> ‘(‘ <valExp> (‘,’ <valExp> )* ‘)’
+			if (maybe(Atom.lParent))
+			{
+				List<Node> args = new LinkedList<Node>();
+				n = valExp(env);
+				while (n != null) {
+					args.add(n);
+					if (maybe(Atom.commaOp))
+						break;
+					n = valExp(env);
+				}
+				accept(Atom.rParent);
+				return new FunctionCallNode(functions.resolve((String)t.getValue()), args);
+			}
+//		| <identifier> [‘[‘ <valExp> ‘]’] [‘.’ <identifier>] <selfNumOp> 
+//		| <identifier> [‘[‘ <valExp> ‘]’] [‘.’ <identifier>] <assignOp> <valExp>
+//		| <identifier> [‘[‘ <valExp> ‘]’] [‘.’ <identifier>]
 			Token tAttr = null;
 			if (maybe(Atom.lBracket)) {
 				n = valExp(env);
@@ -369,27 +442,32 @@ public class Parser {
 				Node value = valExp(env);
 				switch (op.getAtom()) {
 				case becomesOp:
-					return new AssignExpNode((String)t.getValue(), n, (String)tAttr.getValue(), value, env);
+					return new AssignNode(new VariableNode((String)t.getValue(), n, (String)tAttr.getValue(), env), value, env);
 				case plusBecomes:
-					return new PlusAssignNode((String)t.getValue(), n, (String)tAttr.getValue(), value, env);
+					return new PlusAssignNode(new VariableNode((String)t.getValue(), n, (String)tAttr.getValue(), env), value, env);
 				case minusBecomes:
-					return new MinusAssignNode((String)t.getValue(), n, (String)tAttr.getValue(), value, env);
+					return new MinusAssignNode(new VariableNode((String)t.getValue(), n, (String)tAttr.getValue(), env), value, env);
 				default:
 					break;
 				}
 			}
 			return new VariableNode((String)t.getValue(), n, (String)tAttr.getValue(), env);
 		}
-//		| ‘(‘ <typeName> ‘)’ <valExp> 
+//		| ‘(‘ <typeName> [ '[' ']' ] ‘)’ <valExp> 
 //		| '(' <valExp> <numOp> <valExp> ')'
 //		| ‘(‘ <valExp> [<boolOp> <valExp>] ‘)’ 
 //		| '(' <valExp> <compOp> <valExp> ')'
 		if (maybe(Atom.lParent)) {
 			t = typeName();
+			boolean array = false;
 			if (t != null) {
+				if (maybe(Atom.lBracket)) {
+					accept(Atom.rBracket);
+					array = true;
+				}
 				accept(Atom.rParent);
 				Node valNode = valExp(env);
-				return new CastNode(t.getAtom(), valNode, env);
+				return new CastNode(t.getAtom(), array, valNode, env);
 			}
 			Node left = valExp(env);
 			Node right = null;
@@ -435,16 +513,43 @@ public class Parser {
 //		| <constrUse> 
 //		| ‘!’ <valExp> 
 //		| <funcCall>
-		Node n = constrUse(env);
+		n = constrUse(env);
 		if (n != null)
 			return n;
 		if (maybe(Atom.notOp)) {
 			n = valExp(env);
 			return new BoolNotNode(n, env);
 		}
-		n = funcCall();
-		if (n != null)
-			return n;
+//		| <everyAnno> [<startAnno>] <identifier> ‘(‘ <valExp> (‘,’ <valExp> )* ‘)’
+		if (annotation()) {
+			annotation(); //kolejna
+			Environment e = new Environment();
+			t = identifier();
+			accept(Atom.lParent);
+			List<Node> args = new LinkedList<Node>();
+			n = valExp(e);
+			while (n != null) {
+				args.add(n);
+				if (maybe(Atom.commaOp))
+					break;
+				n = valExp(e);
+			}
+			accept(Atom.rParent);
+			return new FunctionCallNode(functions.resolve((String)t.getValue()), args);
+		}
+//		| ‘[‘ <literal> (‘,’ <literal>)* ‘]’
+		if (maybe(Atom.lBracket)) {
+			List<Object> elements = new LinkedList<Object>();
+			t = literal();
+			while (t != null) {
+				elements.add(t.getValue());
+				if (maybe(Atom.commaOp))
+					break;
+				t = literal();
+			}
+			accept(Atom.rBracket);
+			return new ArrayNode(elements.toArray());
+		}
 		throw new ParseException("Oczekiwano valExp");
 	}
 	
@@ -492,7 +597,7 @@ public class Parser {
 	}
 	
 	//'=' | ‘+=’ | '-='
-	private Token assignOp() throws ParseException {
+	private Token assignOp() {
 		if (currToken.getAtom() == Atom.becomesOp ||
 			currToken.getAtom() == Atom.plusBecomes ||
 			currToken.getAtom() == Atom.minusBecomes) {

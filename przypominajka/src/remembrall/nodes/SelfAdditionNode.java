@@ -17,13 +17,14 @@ public class SelfAdditionNode implements Node {
 	}
 	
 	@Override
-	public IdentValue evalNode() throws Exception {
+	public IdentValue evalNode() throws RuntimeException {
 		Object l = env.resolve(ident);
-		if (l instanceof Long) {
+		if (l instanceof Long || l instanceof Double) {
 			env.resolve(ident).v = ((Long)env.resolve(ident).v) + 1; 
 			return new IdentValue(env.resolve(ident));
 		}
 		else
-			throw new Exception();
+			throw new RuntimeException
+				("Operator '++' użyty na obiekcie o niewspieranym typie");
 	}
 }

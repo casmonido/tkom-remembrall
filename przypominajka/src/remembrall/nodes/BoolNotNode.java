@@ -2,6 +2,7 @@ package remembrall.nodes;
 
 import remembrall.Environment;
 import remembrall.IdentValue;
+import remembrall.exceptions.RuntimeException;
 
 public class BoolNotNode implements Node {
 	protected Node left;
@@ -13,7 +14,7 @@ public class BoolNotNode implements Node {
 	}
 
 	@Override
-	public IdentValue evalNode() throws Exception {
+	public IdentValue evalNode() throws RuntimeException {
 		return new IdentValue(!((boolean) left.evalNode().v));
 	}
 }

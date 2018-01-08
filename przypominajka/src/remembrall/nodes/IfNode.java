@@ -4,6 +4,7 @@ import java.util.List;
 
 import remembrall.Environment;
 import remembrall.IdentValue;
+import remembrall.exceptions.RuntimeException;
 
 
 public class IfNode implements Node {
@@ -20,7 +21,7 @@ public class IfNode implements Node {
 	}
 
 	@Override
-	public IdentValue evalNode() throws Exception {
+	public IdentValue evalNode() throws RuntimeException {
 		if ((boolean)cond.evalNode().v == true)
 			for (Node r : iflist)
 				r.evalNode();
