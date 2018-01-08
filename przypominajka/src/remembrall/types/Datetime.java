@@ -1,20 +1,20 @@
 package remembrall.types;
 
 public class Datetime {
-	int year;
-	int month;
-	int day;
-	int hour;
-	int min;
-	int sec;
+	Long year;
+	Long month;
+	Long day;
+	Long hour;
+	Long min;
+	Long sec;
 	
-	public Datetime(int day, int month, int year) {
+	public Datetime(Long day, Long month, Long year) {
 		this.day = day;
 		this.month = month;
 		this.year = year;
 	}
 	
-	public Datetime(int day, int month, int year, Time t) {
+	public Datetime(Long day, Long month, Long year, Time t) {
 		this.day = day;
 		this.month = month;
 		this.year = year;
@@ -23,14 +23,14 @@ public class Datetime {
 		this.sec = t.sec;
 	}
 	
-	public Datetime(int day, int month, int year, int hour) {
+	public Datetime(Long day, Long month, Long year, Long hour) {
 		this.day = day;
 		this.month = month;
 		this.year = year;
 		this.hour = hour;
 	}
 	
-	public Datetime(int day, int month, int year, int hour, int min) {
+	public Datetime(Long day, Long month, Long year, Long hour, Long min) {
 		this.day = day;
 		this.month = month;
 		this.year = year;

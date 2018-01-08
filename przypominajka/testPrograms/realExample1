@@ -13,7 +13,7 @@ return (sum / repeats)
 alarmTime = time(5, 45)
 When ((getCurrentTime() == alarmTime) and
 	(averagePrecipitationDuringDay(
-		localization("Łódź", "02-115", 'Polska'), datetime(2017, 11, 2, 9)) <= 0.1))
+		location("Łódź", "02-115", 'Polska'), datetime(2017, 11, 2, 9)) <= 0.1))
 do
 i = 4
 repeat(3) (

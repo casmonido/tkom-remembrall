@@ -1,22 +1,22 @@
 package remembrall.types;
 
 public class Time {
-	int hour;
-	int min; //czasem -1
-	int sec;
+	Long hour;
+	Long min; //czasem -1
+	Long sec;
 
-	public Time(int hour, int min, int sec) {
+	public Time(Long hour, Long min, Long sec) {
 		this.hour = hour;
 		this.min = min;
 		this.sec = sec;
 	}
 	
-	public Time(int hour, int min) {
+	public Time(Long hour, Long min) {
 		this.hour = hour;
 		this.min = min;
 	}
 	
-	public Time(int hour) {
+	public Time(Long hour) {
 		this.hour = hour;
 	}
 }

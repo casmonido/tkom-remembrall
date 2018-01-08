@@ -39,6 +39,8 @@ import remembrall.tokens.Token;
 import remembrall.nodes.StartNode;
 import remembrall.nodes.SubstractionNode;
 import remembrall.nodes.VariableNode;
+import remembrall.nodes.builtin.GetCurrentTime;
+import remembrall.nodes.builtin.GetWeatherForecast;
 
 
 public class Parser {
@@ -46,7 +48,14 @@ public class Parser {
 	private ScanInterface scan;
 	public StartNode root;
 	private ErrorTracker bin;
-	private Map<String, FunctionDefNode> functions;
+	private Map<String,Node> functions = new HashMap<String,Node>();
+	
+	private void initFunctions() {
+		functions.put("getCurrentTime", new GetCurrentTime());
+		functions.put("getWeatherForecast", new GetWeatherForecast());
+		functions.put("switchOnAlarm", new GetCurrentTime());
+		functions.put("sleep", new GetWeatherForecast());
+	}
 	
 	public Parser(ScanInterface sc, ErrorTracker et) {
 		scan = sc;
@@ -88,7 +97,8 @@ public class Parser {
 	public void start() {
 		Environment env = new Environment();
 		//[<funcDef>*] 
-		functions = include();
+		include();
+		initFunctions();
 		boolean func = false;
 		try {
 			func = funcDef();
@@ -155,8 +165,7 @@ public class Parser {
 	}
 	
 	//'include' <fileName>
-	public Map<String, FunctionDefNode> include() {
-		Map<String, FunctionDefNode> fArr = new HashMap<String, FunctionDefNode>();
+	public void include() {
 		if (maybe(Atom.inclKw)) {
 			Token fileName;
 			try {
@@ -167,7 +176,7 @@ public class Parser {
 				bin.parseError(pe.getMessage());
 			}
 		}
-		return fArr;
+		return;
 	}
 	
 //	<everyAnno> <typeName> | [ ‘[‘ ‘]’ ]  <funcName> 
@@ -261,7 +270,7 @@ public class Parser {
 				try {n = valExp(env);} catch (ParseException pe) {n = null;}
 			}
 			accept(Atom.rParent);
-			return new FunctionCallNode((String)id.getValue(), args);
+			return new FunctionCallNode((String)id.getValue(), functions.get((String)id.getValue()), args);
 		}
 		return null;
 	}
@@ -472,7 +481,7 @@ public class Parser {
 					try {n = valExp(env);} catch (ParseException pe) {n = null;}
 				}
 				accept(Atom.rParent);
-				return new FunctionCallNode((String)t.getValue(), args);
+				return new FunctionCallNode((String)t.getValue(), functions.get((String)t.getValue()), args);
 				//return new FunctionCallNode(functions.resolve((String)t.getValue()), args);
 			}
 //		| <identifier> [‘[‘ <valExp> ‘]’] [‘.’ <identifier>] <selfNumOp> 
@@ -649,7 +658,7 @@ public class Parser {
 				try {n = valExp(e);} catch (ParseException pe) {n = null;}
 			}
 			accept(Atom.rParent);
-			return new FunctionCallNode((String)t.getValue(), args);
+			return new FunctionCallNode((String)t.getValue(), functions.get((String)t.getValue()), args);
 			//return new FunctionCallNode(functions.resolve((String)t.getValue()), args);
 		}
 //		| ‘[‘ <literal> (‘,’ <literal>)* ‘]’

@@ -9,23 +9,25 @@ import remembrall.exceptions.RuntimeException;
 public class FunctionCallNode implements Node {
 	
 	public FunctionDefNode func;
+	public Node builtinFunc;
 	public String funcName;
 	public List<Node> args;
 	private Environment env;
 
-	public FunctionCallNode(FunctionDefNode f, List<Node> args) {
-		this.func = f;
-		this.args = args;
-	}
-
-	public FunctionCallNode(String funcName, List<Node> args) {
+	public FunctionCallNode(String funcName, Node f, List<Node> args) {
 		this.funcName = funcName;
+		if (f instanceof FunctionDefNode)
+			this.func = (FunctionDefNode) f;
+		else
+			this.builtinFunc = f;
 		this.args = args;
 	}
 
 	
 	@Override
 	public IdentValue evalNode(Environment env) throws RuntimeException {
+		if (builtinFunc != null)
+			return builtinFunc.evalNode(env);
 		Environment newEnv = new Environment();
 		for (int i = 0; i < func.args.size(); i++) {
 			String argName = func.args.get(i);
