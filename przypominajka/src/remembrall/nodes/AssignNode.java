@@ -5,8 +5,8 @@ import remembrall.IdentValue;
 import remembrall.exceptions.RuntimeException;
 
 public class AssignNode implements Node {
-	private VariableNode var;
-	private Node val;
+	public VariableNode var;
+	public Node val;
 	private Environment env;
 
 	

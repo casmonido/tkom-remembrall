@@ -22,12 +22,8 @@ public class Main {
 			return;
 		}
 		Parser parser = new Parser(scan, errTr);
-		Environment env = new Environment();
 		try {
 			parser.start();
-			IdentValue t = env.resolve("i");
-			if (t.v != null)
-				System.out.println(t.v);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

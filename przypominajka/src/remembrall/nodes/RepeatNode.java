@@ -6,8 +6,8 @@ import remembrall.Environment;
 import remembrall.IdentValue;
 
 public class RepeatNode implements Node {
-	protected Node left;
-	protected List<Node> right;
+	public Node left;
+	public List<Node> right;
 	protected Environment env;
 	
 	public RepeatNode(Node l, List<Node> r, Environment e) {

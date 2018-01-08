@@ -4,24 +4,20 @@ import remembrall.Environment;
 import remembrall.IdentValue;
 
 public class SelfSubstractionNode implements Node {
-	String ident;
-	String attr;
-	Node valNode;
+	public VariableNode var;
 	Environment env;
 	
-	public SelfSubstractionNode(String ident, Node n, String attr, Environment e) {
-		this.ident = ident;
-		this.attr = attr;
-		this.valNode = n;
+	public SelfSubstractionNode(VariableNode var, Environment e) {
+		this.var = var;
 		this.env = e;
 	}
-
+	
 	@Override
 	public IdentValue evalNode() throws RuntimeException {
-		Object l = env.resolve(ident);
+		Object l = env.resolve(var.ident);
 		if (l instanceof Long || l instanceof Double) {
-			env.resolve(ident).v = ((Long)env.resolve(ident).v) - 1; 
-			return new IdentValue(env.resolve(ident));
+			env.resolve(var.ident).v = ((Long)env.resolve(var.ident).v) - 1; 
+			return new IdentValue(env.resolve(var.ident));
 		}
 		else
 			throw new RuntimeException

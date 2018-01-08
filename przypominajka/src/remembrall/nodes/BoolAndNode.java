@@ -6,8 +6,8 @@ import remembrall.exceptions.RuntimeException;
 
 public class BoolAndNode implements Node {
 
-	protected Node left;
-	protected Node right;
+	public Node left;
+	public Node right;
 	protected Environment env;
 	
 	public BoolAndNode(Node l, Node r, Environment e) {

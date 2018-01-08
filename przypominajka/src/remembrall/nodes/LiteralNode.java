@@ -4,7 +4,7 @@ import remembrall.IdentValue;
 
 public class LiteralNode implements Node {
 
-	protected Object value;
+	public Object value;
 	
 	public LiteralNode(Object v) {
 		value = v;

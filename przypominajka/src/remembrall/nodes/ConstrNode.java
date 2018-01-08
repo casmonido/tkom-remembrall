@@ -9,8 +9,8 @@ import remembrall.exceptions.RuntimeException;
 import remembrall.types.Time;
 
 public class ConstrNode implements Node {
-	protected Atom type;
-	protected List<Node> args;
+	public Atom type;
+	public List<Node> args;
 	protected Environment env;
 	
 	public ConstrNode(Atom t, List<Node> a, Environment e) {

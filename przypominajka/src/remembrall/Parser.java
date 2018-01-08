@@ -14,7 +14,6 @@ import remembrall.nodes.CastNode;
 import remembrall.nodes.ConstrNode;
 import remembrall.nodes.DivNode;
 import remembrall.nodes.EqualsNode;
-import remembrall.nodes.FuncCallName;
 import remembrall.nodes.FunctionCallNode;
 import remembrall.nodes.IfNode;
 import remembrall.nodes.LessEqualsNode;
@@ -41,7 +40,7 @@ import remembrall.nodes.VariableNode;
 public class Parser {
 	private Token currToken;
 	private ScanInterface scan;
-	private Node root;
+	public StartNode root;
 	private ErrorTracker bin;
 	private FunctionArray functions;
 	
@@ -135,7 +134,7 @@ public class Parser {
 		} catch (ParseException pe) {
 			bin.parseError(pe.getMessage());
 		}
-		root = new StartNode(condition, list.toArray(new Node [list.size()]), env);
+		root = new StartNode(assignNodes.toArray(new Node [assignNodes.size()]), condition, list.toArray(new Node [list.size()]), env);
 	}
 	
 	//'include' <fileName>
@@ -205,7 +204,7 @@ public class Parser {
 				try {n = valExp(env);} catch (ParseException pe) {n = null;}
 			}
 			accept(Atom.rParent);
-			return new FuncCallName((String)id.getValue(), args, env);
+			return new FunctionCallNode((String)id.getValue(), args);
 		}
 		return null;
 	}
@@ -416,7 +415,8 @@ public class Parser {
 					try {n = valExp(env);} catch (ParseException pe) {n = null;}
 				}
 				accept(Atom.rParent);
-				return new FunctionCallNode(functions.resolve((String)t.getValue()), args);
+				return new FunctionCallNode((String)t.getValue(), args);
+				//return new FunctionCallNode(functions.resolve((String)t.getValue()), args);
 			}
 //		| <identifier> [‘[‘ <valExp> ‘]’] [‘.’ <identifier>] <selfNumOp> 
 //		| <identifier> [‘[‘ <valExp> ‘]’] [‘.’ <identifier>] <assignOp> <valExp>
@@ -429,32 +429,30 @@ public class Parser {
 			if (maybe(Atom.dotOp))
 				tAttr = identifier();
 			Token op = selfNumOp();
+			VariableNode var = tAttr==null? new VariableNode((String)t.getValue(), n, null, env):
+					new VariableNode((String)t.getValue(), n, (String)tAttr.getValue(), env);
 			if (op != null)
 				switch (op.getAtom()) {
 				case doublePlus:
-					return tAttr==null?
-							new SelfAdditionNode((String)t.getValue(), n, null, env):
-							new SelfAdditionNode((String)t.getValue(), n, (String)tAttr.getValue(), env);
+					return new SelfAdditionNode(var, env);
 				case doubleMinus:
-					return tAttr==null?
-							new SelfSubstractionNode((String)t.getValue(), n, null, env):
-							new SelfSubstractionNode((String)t.getValue(), n, (String)tAttr.getValue(), env);
+					return new SelfSubstractionNode(var, env);
 				default:
 					break;
 				}
 			op = assignOp();
 			if (op != null) {
 				Node value = valExp(env);
-				VariableNode var = tAttr==null?
+				VariableNode varNode = tAttr==null?
 						new VariableNode((String)t.getValue(), n, null, env)
 						:new VariableNode((String)t.getValue(), n, (String)tAttr.getValue(), env);
 				switch (op.getAtom()) {
 				case becomesOp:
-					return new AssignNode(var, value, env);
+					return new AssignNode(varNode, value, env);
 				case plusBecomes:
-					return new PlusAssignNode(var, value, env);
+					return new PlusAssignNode(varNode, value, env);
 				case minusBecomes:
-					return new MinusAssignNode(var, value, env);
+					return new MinusAssignNode(varNode, value, env);
 				default:
 					break;
 				}
@@ -544,7 +542,8 @@ public class Parser {
 				try {n = valExp(e);} catch (ParseException pe) {n = null;}
 			}
 			accept(Atom.rParent);
-			return new FunctionCallNode(functions.resolve((String)t.getValue()), args);
+			return new FunctionCallNode((String)t.getValue(), args);
+			//return new FunctionCallNode(functions.resolve((String)t.getValue()), args);
 		}
 //		| ‘[‘ <literal> (‘,’ <literal>)* ‘]’
 		if (maybe(Atom.lBracket)) {
