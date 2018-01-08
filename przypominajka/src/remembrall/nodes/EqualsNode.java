@@ -11,9 +11,9 @@ public class EqualsNode extends ComparisonNode {
 	}
 
 	@Override
-	public IdentValue evalNode() throws RuntimeException {
-		Object l = left.evalNode().v;
-		Object r = right.evalNode().v;
+	public IdentValue evalNode(Environment env) throws RuntimeException {
+		Object l = left.evalNode(env).v;
+		Object r = right.evalNode(env).v;
 		if (!l.getClass().isInstance(r.getClass()))
 			return new IdentValue(false);
 		if (l == r)

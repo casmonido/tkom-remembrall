@@ -2,35 +2,53 @@ package remembrall;
 
 
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 
 
 public class Environment {
 
-	Map<String, Object> identTable = new HashMap<String, Object>(5);
-	Map<String, Object []> arrTable = new HashMap<String, Object []>(5);
+	List<Map<String, Object>> idents = new LinkedList<Map<String, Object>>();
+	//List<Map<String, Object[]>> arrIdents = new LinkedList<Map<String, Object[]>>();
 	
-	public Environment() {}
+	public Environment() {
+		addLayer();
+	}
 	
-	public Environment(Environment env) {
-		identTable.putAll(env.identTable);
-		arrTable.putAll(env.arrTable);
+	public void addLayer() {
+		idents.add(new HashMap<String, Object>());
+		//arrIdents.add(new HashMap<String, Object []>());
+	}
+	
+	public void removeLayer() {
+		idents.remove(idents.size()-1);
+		//arrIdents.remove(arrIdents.size()-1);
 	}
 	
 	public void bind(String ident, Object val) {
-		identTable.put(ident, val);
+		int layer = findLayer(ident);
+		if (layer == -1)
+			layer = idents.size()-1;
+		idents.get(layer).put(ident, val);
 	}
 	
-	public void bind(String ident, Object [] val) {
-		arrTable.put(ident, val);
+	private int findLayer(String ident) {
+		for (int i = idents.size()-1; i >= 0; i--)
+			if (idents.get(i).get(ident) != null)
+				return i;
+		return -1;
 	}
+	
 	
 	public IdentValue resolve(String ident) {
-		Object obj = identTable.get(ident);
-		Object [] arr = arrTable.get(ident);	
-		if (obj != null)
-			return new IdentValue(obj);
-		return new IdentValue(arr);
+		Object obj = null;
+		for (int i = idents.size()-1; i >= 0; i--) {
+			obj = idents.get(i).get(ident);
+			if (obj != null)
+				return new IdentValue(obj);
+		}
+		return null;
 	}
 }

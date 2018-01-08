@@ -2,7 +2,7 @@ package remembrall.types;
 
 public class Time {
 	int hour;
-	int min;
+	int min; //czasem -1
 	int sec;
 
 	public Time(int hour, int min, int sec) {

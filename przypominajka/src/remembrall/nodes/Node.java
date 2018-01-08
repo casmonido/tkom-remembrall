@@ -1,8 +1,9 @@
 package remembrall.nodes;
 
+import remembrall.Environment;
 import remembrall.IdentValue;
 
 public interface Node {
 
-	public IdentValue evalNode() throws remembrall.exceptions.RuntimeException;
+	public IdentValue evalNode(Environment env) throws remembrall.exceptions.RuntimeException;
 }

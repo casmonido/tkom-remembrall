@@ -14,7 +14,7 @@ public class BoolNotNode implements Node {
 	}
 
 	@Override
-	public IdentValue evalNode() throws RuntimeException {
-		return new IdentValue(!((boolean) left.evalNode().v));
+	public IdentValue evalNode(Environment env) throws RuntimeException {
+		return new IdentValue(!((boolean) left.evalNode(env).v));
 	}
 }

@@ -1,9 +1,12 @@
 package remembrall;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import remembrall.exceptions.ParseException;
+import remembrall.exceptions.RuntimeException;
 import remembrall.nodes.AdditionNode;
 import remembrall.nodes.ArrayNode;
 import remembrall.nodes.AssignNode;
@@ -43,7 +46,7 @@ public class Parser {
 	private ScanInterface scan;
 	public StartNode root;
 	private ErrorTracker bin;
-	private FunctionArray functions;
+	private Map<String, FunctionDefNode> functions;
 	
 	public Parser(ScanInterface sc, ErrorTracker et) {
 		scan = sc;
@@ -84,12 +87,12 @@ public class Parser {
 	//[<include>] [<funcDef>*] [<assignExp>*] ‘When’ <boolExp> ‘do’ <voidExp>+ ‘.’
 	public void start() {
 		Environment env = new Environment();
-		functions = include();
 		//[<funcDef>*] 
-		Node func = null;
+		functions = include();
+		boolean func = false;
 		try {
 			func = funcDef();
-			while (func != null)
+			while (func)
 				func = funcDef();
 		} catch (ParseException pe) {
 			skipTo(new Atom [] {Atom.whenKw});
@@ -142,12 +145,18 @@ public class Parser {
 		} catch (ParseException pe) {
 			bin.parseError(pe.getMessage());
 		}
-		root = new StartNode(assignNodes.toArray(new Node [assignNodes.size()]), condition, list.toArray(new Node [list.size()]), env);
+		root = new StartNode(assignNodes, condition, list, env);
+		try {
+			root.evalNode(new Environment());
+		} catch (RuntimeException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	//'include' <fileName>
-	public FunctionArray include() {
-		FunctionArray fArr = new FunctionArray();
+	public Map<String, FunctionDefNode> include() {
+		Map<String, FunctionDefNode> fArr = new HashMap<String, FunctionDefNode>();
 		if (maybe(Atom.inclKw)) {
 			Token fileName;
 			try {
@@ -162,23 +171,26 @@ public class Parser {
 	}
 	
 //	<everyAnno> <typeName> | [ ‘[‘ ‘]’ ]  <funcName> 
-//	‘(‘ [<typeName> | <collectionType> <identifier> (‘,’ <typeName> | <collectionType> <identifier>)*] ‘)’ 
+//	‘(‘ [<typeName> | <collectionType> <identifier> 
+//			(‘,’ <typeName> | <collectionType> <identifier>)*] ‘)’ 
 //	‘(‘ (<valExp> | <voidExp>)*  <retExp> ‘)’
-	private Node funcDef() throws ParseException {
+	private boolean funcDef() throws ParseException {
 		Environment env = new Environment();
+		Node root;
 		if (maybe(Atom.atOp))
 			if (maybe(Atom.everyKw))
 				if (!everyAnno())
-					throw new ParseException("Oczekiwano resztyeveryAnno... ");
+					throw new ParseException("Oczekiwano reszty everyAnno... ");
 		Token typ = typeName();
 		boolean arr = false;
 		if (typ == null)
-			return null;
+			return false;
 		if (maybe(Atom.lBracket)) {
 			accept(Atom.rBracket);
 			arr = true;
 		}
-		Token id = identifier();
+		List<String> attrs = new LinkedList<String>();
+		Token id, name = identifier();
 		accept(Atom.lParent);
 		typ = typeName();
 		while (typ != null) {
@@ -187,26 +199,34 @@ public class Parser {
 				arr = true;
 			}
 			id = identifier();
+			attrs.add((String)id.getValue());
 			if (!maybe(Atom.commaOp))
 				break;
 			typ = typeName();
 		}
 		accept(Atom.rParent);
 		accept(Atom.lParent);
-		Node voidEx, valEx = null;
+		Node voidEx, valEx, retEx = null;
 		List<Node> list = new LinkedList<Node>();
-		try {valEx = valExp(env);} catch (ParseException pe) {valEx = null;}
-		voidEx = voidExp(env);
-		while (valEx != null || voidEx != null) {
+		try {valEx = valExp(env);} catch (ParseException pe) {valEx = null;} //1
+		voidEx = voidExp(env); //2
+		retEx = retExp(env); //3
+		while (valEx != null || voidEx != null || retEx != null) {
 			if (valEx != null)
 				list.add(valEx);
 			if (voidEx != null)
 				list.add(voidEx);
+			if (retEx != null)
+				list.add(retEx);
 			try {valEx = valExp(env);} catch (ParseException pe) {valEx = null;}
 			voidEx = voidExp(env);	
+			retEx = retExp(env);
 		}
+		if (!(list.get(list.size()-1) instanceof ReturnNode))
+			throw new ParseException("Funkcja nic nie zwraca!");
 		accept(Atom.rParent);
-		return new FunctionDefNode();
+		functions.put((String)name.getValue(), new FunctionDefNode(attrs, list));
+		return true;
 	}
 
 	//<voidExp> -> <ifExp> | <repExp> | <retExp> | <procedureCall>
@@ -217,9 +237,9 @@ public class Parser {
 		n = repExp(env);
 		if (n != null)
 			return n;
-		n = retExp(env);
-		if (n != null)
-			return n;
+//		n = retExp(env); // tylko w funkcjach 
+//		if (n != null)
+//			return n;
 //		n = procedureCall(env); // to moze byc parsowane jako functioncall
 //		if (n != null)
 //			return n;

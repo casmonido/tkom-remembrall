@@ -1,17 +1,22 @@
 package remembrall.nodes;
 
+import java.util.List;
+
+import remembrall.Environment;
 import remembrall.IdentValue;
 import remembrall.exceptions.RuntimeException;
 
 public class FunctionDefNode implements Node {
+	public List<String> args; 
+	public List<Node> body;
 
-	public FunctionDefNode() {
-		
+	public FunctionDefNode(List<String> args, List<Node> body) {
+		this.args = args;
+		this.body = body;
 	}
 	
 	@Override
-	public IdentValue evalNode() throws RuntimeException {
-		// TODO Auto-generated method stub
+	public IdentValue evalNode(Environment env) throws RuntimeException {
 		return null;
 	}
 

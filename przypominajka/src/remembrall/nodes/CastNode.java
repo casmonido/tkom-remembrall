@@ -19,9 +19,9 @@ public class CastNode implements Node {
 	}
 
 	@Override
-	public IdentValue evalNode() throws RuntimeException { // jak rzutowac??
-		if (right.evalNode().v != null)
-			return new IdentValue(right.evalNode().v); 
-		return new IdentValue(right.evalNode().vArr);
+	public IdentValue evalNode(Environment env) throws RuntimeException { // jak rzutowac??
+		if (right.evalNode(env).v != null)
+			return new IdentValue(right.evalNode(env).v); 
+		return new IdentValue(right.evalNode(env).vArr);
 	}
 }

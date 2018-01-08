@@ -15,8 +15,8 @@ public class PlusAssignNode implements Node {
 	}
 	
 	@Override
-	public IdentValue evalNode() throws remembrall.exceptions.RuntimeException {
-		IdentValue value = val.evalNode();
+	public IdentValue evalNode(Environment env) throws remembrall.exceptions.RuntimeException {
+		IdentValue value = val.evalNode(env);
 		if (value.v instanceof Long)
 			env.bind(var.ident, (Long) value.v + (Long) env.resolve(var.ident).v);
 		else

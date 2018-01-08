@@ -20,11 +20,11 @@ public class VariableNode implements Node {
 
 
 	@Override
-	public IdentValue evalNode() throws remembrall.exceptions.RuntimeException { 
+	public IdentValue evalNode(Environment env) throws remembrall.exceptions.RuntimeException { 
 		IdentValue objVal = env.resolve(ident);
 		Object obj = null;
 		if (numVal != null)
-			obj = objVal.vArr[(int)numVal.evalNode().v];
+			obj = objVal.vArr[(int)numVal.evalNode(env).v];
 		else
 			obj = (objVal.v==null)?objVal.vArr:objVal.v;
 		if (attrib != null) {

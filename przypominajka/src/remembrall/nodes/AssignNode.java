@@ -18,8 +18,8 @@ public class AssignNode implements Node {
 
 	
 	@Override
-	public IdentValue evalNode() throws RuntimeException {
-		IdentValue value = val.evalNode();
+	public IdentValue evalNode(Environment env) throws RuntimeException {
+		IdentValue value = val.evalNode(env);
 		if (value.v != null)
 			env.bind(var.ident, value.v);
 		else

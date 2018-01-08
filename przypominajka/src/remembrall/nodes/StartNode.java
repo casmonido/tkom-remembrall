@@ -1,15 +1,17 @@
 package remembrall.nodes;
 
+import java.util.List;
+
 import remembrall.Environment;
 import remembrall.IdentValue;
 
 public class StartNode implements Node {
-	public Node [] earlyAssign;
+	public List<Node> earlyAssign;
 	public Node left;
-	public Node [] right;
+	public List<Node> right;
 	protected Environment env;
 	
-	public StartNode(Node [] asgn, Node l, Node [] r, Environment e) {
+	public StartNode(List<Node> asgn, Node l, List<Node> r, Environment e) {
 		left = l;
 		right = r;
 		env = e;
@@ -18,12 +20,12 @@ public class StartNode implements Node {
 
 	
 	@Override
-	public IdentValue evalNode() throws remembrall.exceptions.RuntimeException {
+	public IdentValue evalNode(Environment env) throws remembrall.exceptions.RuntimeException {
 		for (Node r : earlyAssign)
-			r.evalNode();
-		if ((boolean)left.evalNode().v == true)
+			r.evalNode(env);
+		if ((boolean)left.evalNode(env).v == true)
 			for (Node r : right)
-				r.evalNode();
+				r.evalNode(env);
 		return null;
 	}
 

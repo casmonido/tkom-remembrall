@@ -1,5 +1,6 @@
 package remembrall.nodes;
 
+import remembrall.Environment;
 import remembrall.IdentValue;
 
 public class ArrayNode implements Node {
@@ -14,10 +15,8 @@ public class ArrayNode implements Node {
 		value = new Object [num];
 	}
 	
-	public ArrayNode() {}
-	
 	@Override
-	public IdentValue evalNode() {
+	public IdentValue evalNode(Environment env) {
 		return new IdentValue(value);
 	}
 }

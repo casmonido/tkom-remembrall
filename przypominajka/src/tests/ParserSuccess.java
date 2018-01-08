@@ -51,7 +51,7 @@ public class ParserSuccess extends TestCase {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		AssignNode n = (AssignNode) parser.root.earlyAssign[0];
+		AssignNode n = (AssignNode) parser.root.earlyAssign.get(0);
 		assertEquals(n.var.ident, "alarmTime");
 		assertTrue(n.val instanceof ConstrNode);
 		ConstrNode nv = (ConstrNode)n.val;
@@ -65,7 +65,7 @@ public class ParserSuccess extends TestCase {
 		assertTrue(and.left instanceof EqualsNode);	
 		assertTrue(((EqualsNode)and.left).left instanceof FunctionCallNode);	
 		FunctionCallNode a = (FunctionCallNode)((EqualsNode)and.left).left;
-		assertEquals(a.funcStr, "getCurrentTime");
+		assertEquals(a.funcName, "getCurrentTime");
 		assertTrue(((EqualsNode)and.left).right instanceof VariableNode);	
 		VariableNode b = (VariableNode)((EqualsNode)and.left).right;
 		assertEquals(b.ident, "alarmTime");
@@ -73,7 +73,7 @@ public class ParserSuccess extends TestCase {
 		assertTrue(and.right instanceof LessEqualsNode);	
 		assertTrue(((LessEqualsNode)and.right).left instanceof FunctionCallNode);	
 		a = (FunctionCallNode)((LessEqualsNode)and.right).left;
-		assertEquals(a.funcStr, "averagePrecipitationDuringDay");
+		assertEquals(a.funcName, "averagePrecipitationDuringDay");
 		assertEquals(((LiteralNode)a.args.get(0)).value, "Łódź");
 		assertEquals(((LiteralNode)a.args.get(1)).value, "12-115");
 		assertEquals(((LiteralNode)a.args.get(2)).value, "Polska");
@@ -81,16 +81,16 @@ public class ParserSuccess extends TestCase {
 		LiteralNode c = (LiteralNode)((LessEqualsNode)and.right).right;
 		assertEquals(c.value, new Double(0.1));
 		
-		assertTrue(parser.root.right[0] instanceof AssignNode);
-		AssignNode d = (AssignNode)parser.root.right[0];
+		assertTrue(parser.root.right.get(0) instanceof AssignNode);
+		AssignNode d = (AssignNode)parser.root.right.get(0);
 		assertEquals(d.var.ident, "i");
 		assertEquals(((LiteralNode)d.val).value, new Long(4));
-		assertTrue(parser.root.right[1] instanceof RepeatNode);
+		assertTrue(parser.root.right.get(1) instanceof RepeatNode);
 		
-		RepeatNode r = (RepeatNode)parser.root.right[1];
+		RepeatNode r = (RepeatNode)parser.root.right.get(1);
 		assertEquals(((LiteralNode)r.left).value, new Long(3));
 		a = (FunctionCallNode)r.right.get(0);
-		assertEquals(a.funcStr, "switchOnAlarm");
+		assertEquals(a.funcName, "switchOnAlarm");
 		assertEquals(((LiteralNode)a.args.get(0)).value, "jigsaw-falling-into-place");
 		assertEquals(((VariableNode)a.args.get(1)).ident, "i");
 		
@@ -98,7 +98,7 @@ public class ParserSuccess extends TestCase {
 		assertEquals(e.var.ident, "i");
 
 		a = (FunctionCallNode)r.right.get(2);
-		assertEquals(a.funcStr, "sleep");
+		assertEquals(a.funcName, "sleep");
 		assertTrue(a.args.get(0) instanceof MultiplicationNode);
 		assertEquals(((LiteralNode)((MultiplicationNode)a.args.get(0)).left).value, 
 				new Long(5));

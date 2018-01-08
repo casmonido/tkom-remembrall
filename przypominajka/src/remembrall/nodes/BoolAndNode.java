@@ -17,9 +17,9 @@ public class BoolAndNode implements Node {
 	}
 
 	@Override
-	public IdentValue evalNode() throws RuntimeException {
-		return new IdentValue(((boolean) left.evalNode().v) &&
-				((boolean) right.evalNode().v));
+	public IdentValue evalNode(Environment env) throws RuntimeException {
+		return new IdentValue(((boolean) left.evalNode(env).v) &&
+				((boolean) right.evalNode(env).v));
 	}
 
 }

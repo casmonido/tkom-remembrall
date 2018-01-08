@@ -13,21 +13,29 @@ public class IfNode implements Node {
 	protected List<Node>  elselist;
 	protected Environment env;
 	
-	public IfNode(Node c, List<Node> ifl, List<Node> elsel, Environment e) {
+	public IfNode(Node c, List<Node> il, List<Node> el, Environment e) {
 		cond = c;
-		iflist = ifl;
-		elselist = elsel;
+		iflist = il;
+		elselist = el;
 		env = e;
 	}
 
 	@Override
-	public IdentValue evalNode() throws RuntimeException {
-		if ((boolean)cond.evalNode().v == true)
+	public IdentValue evalNode(Environment env) throws RuntimeException {
+		if ((boolean)cond.evalNode(env).v == true) 
+		{
+			env.addLayer();
 			for (Node r : iflist)
-				r.evalNode();
+				r.evalNode(env);
+			env.removeLayer();
+		}
 		else
+		{
+			env.addLayer();
 			for (Node r : elselist)
-				r.evalNode();
+				r.evalNode(env);
+			env.removeLayer();
+		}
 		return null;
 	}
 }

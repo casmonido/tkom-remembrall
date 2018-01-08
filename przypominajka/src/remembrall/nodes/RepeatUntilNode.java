@@ -17,10 +17,12 @@ public class RepeatUntilNode implements Node {
 	}
 
 	@Override
-	public IdentValue evalNode() throws remembrall.exceptions.RuntimeException {
-		while ((boolean)left.evalNode().v == true)
+	public IdentValue evalNode(Environment env) throws remembrall.exceptions.RuntimeException {
+		env.addLayer();
+		while ((boolean)left.evalNode(env).v == false)
 			for (Node r : right)
-				r.evalNode();
+				r.evalNode(env);
+		env.removeLayer();
 		return null;
 	}
 }

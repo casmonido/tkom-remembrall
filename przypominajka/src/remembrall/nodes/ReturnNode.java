@@ -13,8 +13,8 @@ public class ReturnNode implements Node {
 	}
 
 	@Override
-	public IdentValue evalNode() throws remembrall.exceptions.RuntimeException {
-		return node.evalNode(); //whaaaaaaaa
+	public IdentValue evalNode(Environment env) throws remembrall.exceptions.RuntimeException {
+		return node.evalNode(env); //whaaaaaaaa
 	}
 
 }
