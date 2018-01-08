@@ -15,6 +15,7 @@ import remembrall.nodes.ConstrNode;
 import remembrall.nodes.DivNode;
 import remembrall.nodes.EqualsNode;
 import remembrall.nodes.FunctionCallNode;
+import remembrall.nodes.FunctionDefNode;
 import remembrall.nodes.IfNode;
 import remembrall.nodes.LessEqualsNode;
 import remembrall.nodes.LessThanNode;
@@ -77,8 +78,7 @@ public class Parser {
 					end = true;
 			if (end) break;
 			currToken = scan.nextToken();
-		}
-			
+		}	
 	}
 	
 	//[<include>] [<funcDef>*] [<assignExp>*] ‘When’ <boolExp> ‘do’ <voidExp>+ ‘.’
@@ -86,7 +86,15 @@ public class Parser {
 		Environment env = new Environment();
 		functions = include();
 		//[<funcDef>*] 
-		
+		Node func = null;
+		try {
+			func = funcDef();
+			while (func != null)
+				func = funcDef();
+		} catch (ParseException pe) {
+			skipTo(new Atom [] {Atom.whenKw});
+			bin.parseError(pe.getMessage());
+		}
 		List<Node> assignNodes = new LinkedList<Node>();
 		try {
 			Node aNode = assignExp(env);
@@ -153,24 +161,53 @@ public class Parser {
 		return fArr;
 	}
 	
-	
-//	<collectionType> ::= <typeName> ‘[‘ [<intLit>] ‘]’
-//			<collectionDecl> ::= <variable> ( ‘:’ <collectionType> ) | ( ‘=’  ‘[‘ <literal> (‘,’ <literal>)* ‘]’ ) 
-//	
-	//<collectionDecl> -> <identifier> (  ‘:’ <collectionType> ) 
-	//					| ( ‘=’  ‘[‘ <lit> (‘,’ <lit>)* ‘]’  )
-//	private void collectionDecl(Environment env) throws ParseException {
-//		String var = variable(env);
-//		if (var == null || "".equals(var))
-//			return;
-//		accept(Atom.becomesOp);
-//		Node val = valExp(env);
-//		if (val.evalNode().v != null)
-//			env.bind(var, val.evalNode().v);
-//		else
-//			env.bind(var, val.evalNode().vArr);
-//	}
-	
+//	<everyAnno> <typeName> | [ ‘[‘ ‘]’ ]  <funcName> 
+//	‘(‘ [<typeName> | <collectionType> <identifier> (‘,’ <typeName> | <collectionType> <identifier>)*] ‘)’ 
+//	‘(‘ (<valExp> | <voidExp>)*  <retExp> ‘)’
+	private Node funcDef() throws ParseException {
+		Environment env = new Environment();
+		if (maybe(Atom.atOp))
+			if (maybe(Atom.everyKw))
+				if (!everyAnno())
+					throw new ParseException("Oczekiwano resztyeveryAnno... ");
+		Token typ = typeName();
+		boolean arr = false;
+		if (typ == null)
+			return null;
+		if (maybe(Atom.lBracket)) {
+			accept(Atom.rBracket);
+			arr = true;
+		}
+		Token id = identifier();
+		accept(Atom.lParent);
+		typ = typeName();
+		while (typ != null) {
+			if (maybe(Atom.lBracket)) {
+				accept(Atom.rBracket);
+				arr = true;
+			}
+			id = identifier();
+			if (!maybe(Atom.commaOp))
+				break;
+			typ = typeName();
+		}
+		accept(Atom.rParent);
+		accept(Atom.lParent);
+		Node voidEx, valEx = null;
+		List<Node> list = new LinkedList<Node>();
+		try {valEx = valExp(env);} catch (ParseException pe) {valEx = null;}
+		voidEx = voidExp(env);
+		while (valEx != null || voidEx != null) {
+			if (valEx != null)
+				list.add(valEx);
+			if (voidEx != null)
+				list.add(voidEx);
+			try {valEx = valExp(env);} catch (ParseException pe) {valEx = null;}
+			voidEx = voidExp(env);	
+		}
+		accept(Atom.rParent);
+		return new FunctionDefNode();
+	}
 
 	//<voidExp> -> <ifExp> | <repExp> | <retExp> | <procedureCall>
 	private Node voidExp(Environment env) throws ParseException {
@@ -460,7 +497,7 @@ public class Parser {
 			return tAttr==null?new VariableNode((String)t.getValue(), n, null, env):
 				new VariableNode((String)t.getValue(), n, (String)tAttr.getValue(), env);
 		}
-//		| ‘(‘ <typeName> [ '[' ']' ] ‘)’ <valExp> 
+//		| ‘(‘ <typeName> [ '[' ']' ] ‘)’ <valExp> // uwaga constrUse
 //		| '(' <valExp> <numOp> <valExp> ')'
 //		| ‘(‘ <valExp> [<boolOp> <valExp>] ‘)’ 
 //		| '(' <valExp> <compOp> <valExp> ')'
@@ -472,9 +509,59 @@ public class Parser {
 					accept(Atom.rBracket);
 					array = true;
 				}
+				if (maybe(Atom.rParent)) {
+					Node valNode = valExp(env);
+					return new CastNode(t.getAtom(), array, valNode, env);
+				}
+				accept(Atom.lParent);
+				List<Node> args = new LinkedList<Node>();
+				n = valExp(env);
+				while (n != null) {
+					args.add(n);
+					if (!maybe(Atom.commaOp))
+						break;
+					n = valExp(env);
+				}
 				accept(Atom.rParent);
-				Node valNode = valExp(env);
-				return new CastNode(t.getAtom(), array, valNode, env);
+				Node left = new ConstrNode(t.getAtom(), args, env);
+				Token op;
+				if ((op = numOp()) == null) 
+					if ((op = boolOp()) == null)
+						op = compOp();
+				if (op == null) {
+					accept(Atom.rParent);
+					return left;
+				}
+				Node right = valExp(env);
+				accept(Atom.rParent);
+				switch (op.getAtom()) {
+				case andKw:
+					return new BoolAndNode(left, right, env);
+				case orKw:
+					return new BoolOrNode(left, right, env);
+				case plusOp:
+					return new AdditionNode(left, right, env);
+				case minusOp:
+					return new SubstractionNode(left, right, env);
+				case divOp:
+					return new DivNode(left, right, env);
+				case multOp:
+					return new MultiplicationNode(left, right, env);
+				case equalsOp:
+					return new EqualsNode(left, right, env);
+				case notEqual:
+					return new NotEqualNode(left, right, env);
+				case lessEquals:
+					return new LessEqualsNode(left, right, env);
+				case lessThan:
+					return new LessThanNode(left, right, env);
+				case moreEquals:
+					return new MoreEqualsNode(left, right, env);
+				case moreThan:
+					return new MoreThanNode(left, right, env);
+				default:
+					bin.parseError("Zły operator na pozycji " + op.getTextPos().toString());
+				}
 			}
 			Node left = valExp(env);
 			Node right = null;

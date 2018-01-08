@@ -15,6 +15,7 @@ public class AssignNode implements Node {
 		this.val = val;
 		this.env = e;
 	}
+
 	
 	@Override
 	public IdentValue evalNode() throws RuntimeException {

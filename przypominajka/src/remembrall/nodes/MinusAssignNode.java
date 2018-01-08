@@ -9,8 +9,8 @@ public class MinusAssignNode implements Node {
 	private Environment env;
 
 	
-	public MinusAssignNode(VariableNode var, Node val, Environment e) {
-		this.var = var;
+	public MinusAssignNode(VariableNode c, Node val, Environment e) {
+		this.var = c;
 		this.val = val;
 		this.env = e;
 	}

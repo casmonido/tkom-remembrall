@@ -1,0 +1,20 @@
+@every(360)
+bool itIsDark() (
+            today = getCurrentDate()
+            tomorrow = getEndDate(today, time(24)) // lub today.day + 1
+	if ((getSunset(today) < getCurrentTime()) and 
+			(getSunrise(tomorrow) > getCurrentTime()))
+		(return true)
+	return false
+)
+@every(60)
+bool itIsRainyhere(location place) (
+w = getCurrentWeather(place)
+if (w.precipitation == 0)
+	(return true)
+return false
+)
+here = location('185a', 'Kuźnica Dolna', '23-415', "Wyborów", 'Polska')
+When ( itIsDark() and ! itIsRainy(here) )
+do
+sentSMS('Kasia', "Wyjdziemy na spacer?").

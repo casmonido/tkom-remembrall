@@ -12,7 +12,7 @@ class A {
 public class Main {
 
 	public static void main (String [] args) {
-		String filePath = "../przypominajka/testPrograms/short1";
+		String filePath = "../przypominajka/testPrograms/realExample4";
 		Scan scan = null;
 		ErrorTracker errTr = new ErrorTracker();
 		try {

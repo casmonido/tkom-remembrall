@@ -7,10 +7,9 @@ public class PlusAssignNode implements Node {
 	private VariableNode var;
 	private Node val;
 	private Environment env;
-
 	
-	public PlusAssignNode(VariableNode var, Node val, Environment e) {
-		this.var = var;
+	public PlusAssignNode(VariableNode c, Node val, Environment e) {
+		this.var = c;
 		this.val = val;
 		this.env = e;
 	}
