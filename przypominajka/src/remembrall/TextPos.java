@@ -11,6 +11,6 @@ public class TextPos {
 	}
 	
 	public String toString() {
-		return "In line:" + lineNum + ", symbol:" + charNum;
+		return "line:" + lineNum + ", symbol:" + charNum;
 	}
 }

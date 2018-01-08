@@ -184,9 +184,9 @@ public class Parser {
 		n = retExp(env);
 		if (n != null)
 			return n;
-		n = procedureCall(env);
-		if (n != null)
-			return n;
+//		n = procedureCall(env); // to moze byc parsowane jako functioncall
+//		if (n != null)
+//			return n;
 		return null;
 	}
 	
@@ -200,7 +200,7 @@ public class Parser {
 			try {n = valExp(env);} catch (ParseException pe) {n = null;}
 			while (n != null) {
 				args.add(n);
-				if (maybe(Atom.commaOp))
+				if (!maybe(Atom.commaOp))
 					break;
 				try {n = valExp(env);} catch (ParseException pe) {n = null;}
 			}
@@ -237,7 +237,7 @@ public class Parser {
 			try {valEx = valExp(env);} catch (ParseException pe) {valEx = null;}
 			voidEx = voidExp(env);
 			List<Node> list = new LinkedList<Node>();
-			while (valEx != null && voidEx != null) {
+			while (valEx != null || voidEx != null) {
 				if (valEx != null)
 					list.add(valEx);
 				if (voidEx != null)
@@ -353,7 +353,8 @@ public class Parser {
 				if (tAttr == null)
 					throw new ParseException("Brak atrybutu");
 			}
-			return new VariableNode((String)ident.getValue(), vNode, (String)tAttr.getValue(), env);
+			return tAttr==null?new VariableNode((String)ident.getValue(), vNode, null, env):
+					new VariableNode((String)ident.getValue(), vNode, (String)tAttr.getValue(), env);
 		}
 		return null;
 	}
@@ -407,12 +408,12 @@ public class Parser {
 			if (maybe(Atom.lParent))
 			{
 				List<Node> args = new LinkedList<Node>();
-				n = valExp(env);
+				try {n = valExp(env);} catch (ParseException pe) {n = null;}
 				while (n != null) {
 					args.add(n);
-					if (maybe(Atom.commaOp))
+					if (!maybe(Atom.commaOp))
 						break;
-					n = valExp(env);
+					try {n = valExp(env);} catch (ParseException pe) {n = null;}
 				}
 				accept(Atom.rParent);
 				return new FunctionCallNode(functions.resolve((String)t.getValue()), args);
@@ -431,27 +432,35 @@ public class Parser {
 			if (op != null)
 				switch (op.getAtom()) {
 				case doublePlus:
-					return new SelfAdditionNode((String)t.getValue(), n, (String)tAttr.getValue(), env);
+					return tAttr==null?
+							new SelfAdditionNode((String)t.getValue(), n, null, env):
+							new SelfAdditionNode((String)t.getValue(), n, (String)tAttr.getValue(), env);
 				case doubleMinus:
-					return new SelfSubstractionNode((String)t.getValue(), n, (String)tAttr.getValue(), env);
+					return tAttr==null?
+							new SelfSubstractionNode((String)t.getValue(), n, null, env):
+							new SelfSubstractionNode((String)t.getValue(), n, (String)tAttr.getValue(), env);
 				default:
 					break;
 				}
 			op = assignOp();
 			if (op != null) {
 				Node value = valExp(env);
+				VariableNode var = tAttr==null?
+						new VariableNode((String)t.getValue(), n, null, env)
+						:new VariableNode((String)t.getValue(), n, (String)tAttr.getValue(), env);
 				switch (op.getAtom()) {
 				case becomesOp:
-					return new AssignNode(new VariableNode((String)t.getValue(), n, (String)tAttr.getValue(), env), value, env);
+					return new AssignNode(var, value, env);
 				case plusBecomes:
-					return new PlusAssignNode(new VariableNode((String)t.getValue(), n, (String)tAttr.getValue(), env), value, env);
+					return new PlusAssignNode(var, value, env);
 				case minusBecomes:
-					return new MinusAssignNode(new VariableNode((String)t.getValue(), n, (String)tAttr.getValue(), env), value, env);
+					return new MinusAssignNode(var, value, env);
 				default:
 					break;
 				}
 			}
-			return new VariableNode((String)t.getValue(), n, (String)tAttr.getValue(), env);
+			return tAttr==null?new VariableNode((String)t.getValue(), n, null, env):
+				new VariableNode((String)t.getValue(), n, (String)tAttr.getValue(), env);
 		}
 //		| ‘(‘ <typeName> [ '[' ']' ] ‘)’ <valExp> 
 //		| '(' <valExp> <numOp> <valExp> ')'
@@ -527,12 +536,12 @@ public class Parser {
 			t = identifier();
 			accept(Atom.lParent);
 			List<Node> args = new LinkedList<Node>();
-			n = valExp(e);
+			try {n = valExp(e);} catch (ParseException pe) {n = null;}
 			while (n != null) {
 				args.add(n);
-				if (maybe(Atom.commaOp))
+				if (!maybe(Atom.commaOp))
 					break;
-				n = valExp(e);
+				try {n = valExp(e);} catch (ParseException pe) {n = null;}
 			}
 			accept(Atom.rParent);
 			return new FunctionCallNode(functions.resolve((String)t.getValue()), args);
@@ -543,7 +552,7 @@ public class Parser {
 			t = literal();
 			while (t != null) {
 				elements.add(t.getValue());
-				if (maybe(Atom.commaOp))
+				if (!maybe(Atom.commaOp))
 					break;
 				t = literal();
 			}

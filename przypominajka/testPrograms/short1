@@ -1,0 +1,11 @@
+
+alarmTime = time(5, 45)
+When ((getCurrentTime() == alarmTime) and 
+	(averagePrecipitationDuringDay("Łódź", '12-115', 'Polska') <= 0.1))
+do
+i = 4
+repeat(3) (
+switchOnAlarm('jigsaw-falling-into-place', i)
+i++ //uwaga między pr
+sleep((5*60))
+).
