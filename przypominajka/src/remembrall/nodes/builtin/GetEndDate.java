@@ -4,13 +4,14 @@ import remembrall.Environment;
 import remembrall.IdentValue;
 import remembrall.exceptions.RuntimeException;
 import remembrall.nodes.Node;
-import remembrall.types.Time;
+import remembrall.types.Datetime;
 
-public class GetCurrentTime implements Node {
+public class GetEndDate implements Node {
 
 	@Override
 	public IdentValue evalNode(Environment env) throws RuntimeException {
-		return new IdentValue(new Time(new Long(2), new Long(10)));
+		return new IdentValue(new Datetime(
+				new Long(2), new Long(10), new Long(2018)));
 	}
 
 }

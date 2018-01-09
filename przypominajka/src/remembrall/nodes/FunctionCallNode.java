@@ -39,12 +39,8 @@ public class FunctionCallNode implements Node {
 				e.printStackTrace();
 			}
 		}
-		for (Node n: args) {
-			if (n instanceof ReturnNode)
-				return n.evalNode(newEnv);
-			n.evalNode(newEnv);
-		}
-		return null;
+		IdentValue obj = func.evalNode(newEnv); // kiedy vArr?
+		return func.evalNode(newEnv);
 	}
 
 }

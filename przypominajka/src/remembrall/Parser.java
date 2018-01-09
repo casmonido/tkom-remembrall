@@ -40,6 +40,7 @@ import remembrall.nodes.StartNode;
 import remembrall.nodes.SubstractionNode;
 import remembrall.nodes.VariableNode;
 import remembrall.nodes.builtin.GetBirthdaysToday;
+import remembrall.nodes.builtin.GetCurrentDate;
 import remembrall.nodes.builtin.GetCurrentTime;
 import remembrall.nodes.builtin.GetWeatherForecast;
 
@@ -58,6 +59,9 @@ public class Parser {
 		functions.put("sleep", new GetWeatherForecast());
 		functions.put("getBirthdaysToday", new GetBirthdaysToday());
 		functions.put("sendSMS", new GetWeatherForecast());
+		functions.put("getCurrentDate", new GetCurrentDate());
+		
+		functions.put("getEndDate", new GetWeatherForecast());
 	}
 	
 	public Parser(ScanInterface sc, ErrorTracker et) {

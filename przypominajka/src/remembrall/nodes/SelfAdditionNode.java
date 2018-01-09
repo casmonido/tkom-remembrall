@@ -14,9 +14,13 @@ public class SelfAdditionNode implements Node {
 	
 	@Override
 	public IdentValue evalNode(Environment env) throws RuntimeException {
-		Object l = env.resolve(var.ident);
-		if (l instanceof Long || l instanceof Double) {
-			env.resolve(var.ident).v = ((Long)env.resolve(var.ident).v) + 1; 
+		Object l = env.resolve(var.ident).v;
+		if (l instanceof Long || l instanceof Integer) {
+			env.bind(var.ident, ((Long)env.resolve(var.ident).v) + 1); 
+			return new IdentValue(env.resolve(var.ident));
+		}
+		if (l instanceof Double) {
+			env.bind(var.ident, ((Double)env.resolve(var.ident).v) + 1);
 			return new IdentValue(env.resolve(var.ident));
 		}
 		else

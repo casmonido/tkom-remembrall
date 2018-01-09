@@ -17,6 +17,11 @@ public class FunctionDefNode implements Node {
 	
 	@Override
 	public IdentValue evalNode(Environment env) throws RuntimeException {
+		for (Node n: body) {
+			if (n instanceof ReturnNode)
+				return n.evalNode(env);
+			n.evalNode(env);
+		}
 		return null;
 	}
 

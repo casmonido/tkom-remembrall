@@ -18,7 +18,11 @@ public class RepeatNode implements Node {
 
 	@Override
 	public IdentValue evalNode(Environment env) throws remembrall.exceptions.RuntimeException {
-		int num = (int)left.evalNode(env).v;
+		int num;
+		if (left.evalNode(env).v instanceof Long)
+			num = ((Long)left.evalNode(env).v).intValue();
+		else
+			num = (int)left.evalNode(env).v;
 		env.addLayer();
 		for (int i = num; i >= 0; i--) {
 			for (Node r : right)

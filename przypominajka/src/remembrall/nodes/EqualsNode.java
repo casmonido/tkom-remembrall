@@ -16,7 +16,7 @@ public class EqualsNode extends ComparisonNode {
 		Object r = right.evalNode(env).v;
 		if (!l.getClass().isInstance(r))
 			return new IdentValue(false);
-		if (l == r)
+		if (l.equals(r))
 			return new IdentValue(true);
 		return new IdentValue(false);
 	}
