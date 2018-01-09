@@ -1,5 +1,6 @@
 package remembrall.nodes;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 
 import remembrall.Environment;
@@ -30,6 +31,8 @@ public class VariableNode implements Node {
 		if (attrib != null) {
 			Field f = null;
 			try {
+				if ("length".equals(attrib))
+					return new IdentValue(new Long(Array.getLength(obj)));
 				f = obj.getClass().getDeclaredField(attrib);
 			} catch (NoSuchFieldException e) {
 				throw new RuntimeException("Atrybut nie występuje w obiekcie");

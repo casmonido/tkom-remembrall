@@ -14,7 +14,7 @@ public class LessEqualsNode extends ComparisonNode {
 	public IdentValue evalNode(Environment env) throws RuntimeException {
 		Object l = left.evalNode(env).v;
 		Object r = right.evalNode(env).v;
-		if (!l.getClass().isInstance(r.getClass()))
+		if (!l.getClass().isInstance(r))
 			throw new RuntimeException("");
 		if (l instanceof Long)
 			if ((Long)l <= (Long)r)

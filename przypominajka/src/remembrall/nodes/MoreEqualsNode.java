@@ -13,7 +13,7 @@ public class MoreEqualsNode extends ComparisonNode {
 	public IdentValue evalNode(Environment env) throws remembrall.exceptions.RuntimeException {
 		Object l = left.evalNode(env).v;
 		Object r = right.evalNode(env).v;
-		if (!l.getClass().isInstance(r.getClass()))
+		if (!l.getClass().isInstance(r))
 			throw new RuntimeException("Porównanie między obiektami różych typów");
 		if (l instanceof Long)
 			if ((Long)l >= (Long)r)

@@ -1,4 +1,4 @@
-When ((5 > 0)) do 
+When (true) do 
 bdayguys = getBirthdaysToday()
 i = 0
 repeatUntil((i < bdayguys.length)) (

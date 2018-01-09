@@ -3,11 +3,6 @@ package remembrall;
 import java.io.FileNotFoundException;
 import java.io.UnsupportedEncodingException;
 
-class A {
-	int a = 5;
-	Integer s;
-	public A() {}
-}
 
 public class Main {
 

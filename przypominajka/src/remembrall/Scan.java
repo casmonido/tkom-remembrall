@@ -225,8 +225,15 @@ public class Scan implements ScanInterface {
 		} 
 		Atom at = keywords.get(identifier);
 		if (at != null) 
-			 //m.in. nullKw, nonImportantKw, falseKw, trueKw
-			return new BasicToken(at, atomStart);
+			 //m.in. nullKw, nonImportantKw
+			switch (at) {
+			case falseKw:
+				return new BasicToken(at, atomStart, new Boolean(false));
+			case trueKw:
+				return new BasicToken(at, atomStart, new Boolean(true));
+			default:
+				return new BasicToken(at, atomStart);
+			}
 		else 
 			return new StringToken(Atom.identifier, atomStart, identifier);
 	}

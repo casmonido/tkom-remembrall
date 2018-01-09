@@ -39,6 +39,7 @@ import remembrall.tokens.Token;
 import remembrall.nodes.StartNode;
 import remembrall.nodes.SubstractionNode;
 import remembrall.nodes.VariableNode;
+import remembrall.nodes.builtin.GetBirthdaysToday;
 import remembrall.nodes.builtin.GetCurrentTime;
 import remembrall.nodes.builtin.GetWeatherForecast;
 
@@ -55,6 +56,8 @@ public class Parser {
 		functions.put("getWeatherForecast", new GetWeatherForecast());
 		functions.put("switchOnAlarm", new GetCurrentTime());
 		functions.put("sleep", new GetWeatherForecast());
+		functions.put("getBirthdaysToday", new GetBirthdaysToday());
+		functions.put("sendSMS", new GetWeatherForecast());
 	}
 	
 	public Parser(ScanInterface sc, ErrorTracker et) {
@@ -323,16 +326,20 @@ public class Parser {
 			List<Node> elseList = new LinkedList<Node>();
 			Node cond = valExp(env);
 			accept(Atom.lParent);
-			Node valEx, voidEx = null;
+			Node valEx, voidEx, retEx = null;
 			try {valEx = valExp(env);} catch (ParseException pe) {valEx = null;}
 			voidEx = voidExp(env);
-			while (valEx != null || voidEx != null) {
+			retEx = retExp(env);
+			while (valEx != null || voidEx != null || retEx != null) {
 				if (valEx != null)
 					ifList.add(valEx);
 				if (voidEx != null)
 					ifList.add(voidEx);
+				if (retEx != null)
+					ifList.add(retEx);
 				try {valEx = valExp(env);} catch (ParseException pe) {valEx = null;}
 				voidEx = voidExp(env);
+				retEx = retExp(env);
 			}
 			accept(Atom.rParent);
 			if (maybe(Atom.elseKw)) {
