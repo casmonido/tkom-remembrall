@@ -42,6 +42,8 @@ import remembrall.nodes.VariableNode;
 import remembrall.nodes.builtin.GetBirthdaysToday;
 import remembrall.nodes.builtin.GetCurrentDate;
 import remembrall.nodes.builtin.GetCurrentTime;
+import remembrall.nodes.builtin.GetDuration;
+import remembrall.nodes.builtin.GetSunset;
 import remembrall.nodes.builtin.GetWeatherForecast;
 
 
@@ -61,6 +63,9 @@ public class Parser {
 		functions.put("sendSMS", new GetWeatherForecast());
 		functions.put("getCurrentDate", new GetCurrentDate());
 		
+		functions.put("getDuration", new GetDuration());
+		functions.put("getCurrentDayTime", new GetCurrentDate());
+		functions.put("getSunset", new GetSunset());
 		functions.put("getEndDate", new GetWeatherForecast());
 	}
 	

@@ -7,7 +7,7 @@ import java.io.UnsupportedEncodingException;
 public class Main {
 
 	public static void main (String [] args) {
-		String filePath = "../przypominajka/testPrograms/realExample2";
+		String filePath = "../przypominajka/testPrograms/realExample3";
 		Scan scan = null;
 		ErrorTracker errTr = new ErrorTracker();
 		try {

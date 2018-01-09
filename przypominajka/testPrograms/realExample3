@@ -2,6 +2,7 @@
  return (int) getDuration(  getCurrentDayTime(), (christmasDate.hours / 24)  )
 )
 
-When ( daysTillChristmas(     (datetime(2017, 12, 24) < 5)     ) )
+When (( daysTillChristmas(datetime(2017, 12, 24))    < 5  ) )
 do 
-sendSMS ('Czy mam już prezenty?', ja).
+sendSMS ('Czy mam już prezenty?', ja)
+.
