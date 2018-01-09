@@ -1,0 +1,8 @@
+When (true) do
+i = -7
+i += 9
+repeat (2) (
+x = 9
+i++
+)
+.

@@ -168,8 +168,11 @@ public class Parser {
 			bin.parseError(pe.getMessage());
 		}
 		root = new StartNode(assignNodes, condition, list, env);
+	}
+	
+	public void run(Environment env) {
 		try {
-			root.evalNode(new Environment());
+			root.evalNode(env);
 		} catch (RuntimeException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
