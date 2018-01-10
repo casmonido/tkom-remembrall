@@ -36,6 +36,7 @@ import remembrall.nodes.ReturnNode;
 import remembrall.nodes.SelfAdditionNode;
 import remembrall.nodes.SelfSubstractionNode;
 import remembrall.tokens.Token;
+import remembrall.types.Type;
 import remembrall.nodes.StartNode;
 import remembrall.nodes.SubstractionNode;
 import remembrall.nodes.VariableNode;
@@ -111,11 +112,10 @@ public class Parser {
 		//[<funcDef>*] 
 		include();
 		initFunctions();
-		boolean func = false;
+		FunctionDefNode func;
 		try {
-			func = funcDef();
-			while (func)
-				func = funcDef();
+			while ((func = funcDef()) != null)
+				functions.put(func.getName(), func);
 		} catch (ParseException pe) {
 			skipTo(new Atom [] {Atom.whenKw});
 			bin.parseError(pe.getMessage());
@@ -150,17 +150,12 @@ public class Parser {
 			skipTo(new Atom [] {Atom.dotOp});
 			bin.parseError(pe.getMessage());
 		}
-		Node voidEx, valEx = null;
-		try {valEx = valExp(env);} catch (ParseException pe) {valEx = null;}
-		try {voidEx = voidExp(env);} catch (ParseException pe) {voidEx = null;}	
-		List<Node> list = new LinkedList<Node>();
-		while (valEx != null || voidEx != null) {
-			if (valEx != null)
-				list.add(valEx);
-			if (voidEx != null)
-				list.add(voidEx);
-			try {valEx = valExp(env);} catch (ParseException pe) {valEx = null;}
-			try {voidEx = voidExp(env);} catch (ParseException pe) {voidEx = null;}		
+		List<Node> list = null;
+		try {
+			list = parseInstructionList(env);
+		} catch (ParseException pe) {
+			skipTo(new Atom [] {Atom.dotOp});
+			bin.parseError(pe.getMessage());
 		}
 		try {
 			accept(Atom.dotOp);
@@ -169,6 +164,17 @@ public class Parser {
 		}
 		root = new StartNode(assignNodes, condition, list, env);
 	}
+	
+	private List<Node> parseInstructionList(Environment env) throws ParseException {
+		List<Node> list = new LinkedList<Node>();
+		Node expr = null;
+		while ((expr = valExp(env)) != null || (expr = voidExp(env)) != null) {
+			if (expr != null)
+				list.add(expr);
+		}
+		return list;
+	}
+
 	
 	public void run(Environment env) {
 		try {
@@ -194,63 +200,50 @@ public class Parser {
 		return;
 	}
 	
+	private Type parseType() throws ParseException {
+		Token typ = typeName();
+		boolean arr = false;
+		if (typ == null)
+			return null;
+		if (maybe(Atom.lBracket)) {
+			accept(Atom.rBracket);
+			arr = true;
+		}
+		return new Type(typ.getAtom(), arr);
+	}
+	
 //	<everyAnno> <typeName> | [ ‘[‘ ‘]’ ]  <funcName> 
 //	‘(‘ [<typeName> | <collectionType> <identifier> 
 //			(‘,’ <typeName> | <collectionType> <identifier>)*] ‘)’ 
 //	‘(‘ (<valExp> | <voidExp>)*  <retExp> ‘)’
-	private boolean funcDef() throws ParseException {
+	private FunctionDefNode funcDef() throws ParseException {
 		Environment env = new Environment();
 		Node root;
 		if (maybe(Atom.atOp))
 			if (maybe(Atom.everyKw))
 				if (!everyAnno())
 					throw new ParseException("Oczekiwano reszty everyAnno... ");
-		Token typ = typeName();
-		boolean arr = false;
-		if (typ == null)
-			return false;
-		if (maybe(Atom.lBracket)) {
-			accept(Atom.rBracket);
-			arr = true;
-		}
+		Type retTyp = parseType();
+		if (retTyp == null)
+			return null;
 		List<String> attrs = new LinkedList<String>();
 		Token id, name = identifier();
 		accept(Atom.lParent);
-		typ = typeName();
+		Type typ = parseType();
 		while (typ != null) {
-			if (maybe(Atom.lBracket)) {
-				accept(Atom.rBracket);
-				arr = true;
-			}
 			id = identifier();
 			attrs.add((String)id.getValue());
 			if (!maybe(Atom.commaOp))
 				break;
-			typ = typeName();
+			typ = parseType();
 		}
 		accept(Atom.rParent);
 		accept(Atom.lParent);
-		Node voidEx, valEx, retEx = null;
-		List<Node> list = new LinkedList<Node>();
-		try {valEx = valExp(env);} catch (ParseException pe) {valEx = null;} //1
-		voidEx = voidExp(env); //2
-		retEx = retExp(env); //3
-		while (valEx != null || voidEx != null || retEx != null) {
-			if (valEx != null)
-				list.add(valEx);
-			if (voidEx != null)
-				list.add(voidEx);
-			if (retEx != null)
-				list.add(retEx);
-			try {valEx = valExp(env);} catch (ParseException pe) {valEx = null;}
-			voidEx = voidExp(env);	
-			retEx = retExp(env);
-		}
+		List<Node> list = parseInstructionList(env);
 		if (!(list.get(list.size()-1) instanceof ReturnNode))
 			throw new ParseException("Funkcja nic nie zwraca!");
 		accept(Atom.rParent);
-		functions.put((String)name.getValue(), new FunctionDefNode(attrs, list));
-		return true;
+		return new FunctionDefNode((String)name.getValue(), attrs, list);
 	}
 
 	//<voidExp> -> <ifExp> | <repExp> | <retExp> | <procedureCall>
@@ -261,9 +254,9 @@ public class Parser {
 		n = repExp(env);
 		if (n != null)
 			return n;
-//		n = retExp(env); // tylko w funkcjach 
-//		if (n != null)
-//			return n;
+		n = retExp(env); // tylko w funkcjach 
+		if (n != null)
+			return n;
 //		n = procedureCall(env); // to moze byc parsowane jako functioncall
 //		if (n != null)
 //			return n;
@@ -277,12 +270,12 @@ public class Parser {
 			accept(Atom.lParent);
 			List<Node> args = new LinkedList<Node>();
 			Node n = null;
-			try {n = valExp(env);} catch (ParseException pe) {n = null;}
+			n = valExp(env);
 			while (n != null) {
 				args.add(n);
 				if (!maybe(Atom.commaOp))
 					break;
-				try {n = valExp(env);} catch (ParseException pe) {n = null;}
+				n = valExp(env);
 			}
 			accept(Atom.rParent);
 			return new FunctionCallNode((String)id.getValue(), functions.get((String)id.getValue()), args);
@@ -294,6 +287,8 @@ public class Parser {
 	public Node retExp(Environment env) throws ParseException {
 		if (maybe(Atom.returnKw)) {
 			Node ret = valExp(env);
+			if (ret == null)
+				throw new ParseException("valExp puste");
 			return new ReturnNode(ret, env);
 		}
 		return null;
@@ -303,7 +298,6 @@ public class Parser {
 	//			| 'repeatUntil' ‘(‘ <valExp> ‘)’ ‘(‘ (<valExp> | <voidExp>)* ‘)’
 	private Node repExp(Environment env) throws ParseException {
 		Atom repeat = null;
-		Node valEx, voidEx = null;
 		if (maybe(Atom.repeatKw)) 
 			repeat = Atom.repeatKw;
 		else 
@@ -312,19 +306,11 @@ public class Parser {
 		if (repeat != null) {
 			accept(Atom.lParent);
 			Node cond = valExp(env);
+			if (cond == null)
+				throw new ParseException("valExp puste");
 			accept(Atom.rParent);
 			accept(Atom.lParent);
-			try {valEx = valExp(env);} catch (ParseException pe) {valEx = null;}
-			voidEx = voidExp(env);
-			List<Node> list = new LinkedList<Node>();
-			while (valEx != null || voidEx != null) {
-				if (valEx != null)
-					list.add(valEx);
-				if (voidEx != null)
-					list.add(voidEx);
-				try {valEx = valExp(env);} catch (ParseException pe) {valEx = null;}
-				voidEx = voidExp(env);	
-			}
+			List<Node> list = parseInstructionList(env);
 			accept(Atom.rParent);
 			return (repeat==Atom.repeatUntilKw)?new RepeatUntilNode(cond, list, env):new RepeatNode(cond, list, env);
 		}
@@ -334,42 +320,19 @@ public class Parser {
 	//‘if’ <valExp> ‘(’ (<valExp> | <voidExp>)* ‘)’ [ ‘else’ ‘(’ (<valExp> | <voidExp> )* ‘)’ ]
 	private Node ifExp(Environment env) throws ParseException {
 		if (maybe(Atom.ifKw)) {
-			List<Node> ifList = new LinkedList<Node>();
-			List<Node> elseList = new LinkedList<Node>();
 			Node cond = valExp(env);
+			if (cond == null)
+				throw new ParseException("valExp puste");
 			accept(Atom.lParent);
-			Node valEx, voidEx, retEx = null;
-			try {valEx = valExp(env);} catch (ParseException pe) {valEx = null;}
-			voidEx = voidExp(env);
-			retEx = retExp(env);
-			while (valEx != null || voidEx != null || retEx != null) {
-				if (valEx != null)
-					ifList.add(valEx);
-				if (voidEx != null)
-					ifList.add(voidEx);
-				if (retEx != null)
-					ifList.add(retEx);
-				try {valEx = valExp(env);} catch (ParseException pe) {valEx = null;}
-				voidEx = voidExp(env);
-				retEx = retExp(env);
-			}
+			List<Node> elseList = null, ifList = parseInstructionList(env);
 			accept(Atom.rParent);
 			if (maybe(Atom.elseKw)) {
 				//‘else’ ‘(’ (<valExp> | <voidExp> )* ‘)’
 				accept(Atom.lParent);
-				try {valEx = valExp(env);} catch (ParseException pe) {valEx = null;}
-				voidEx = voidExp(env);
-				while (valEx != null && voidEx != null) {
-					if (valEx != null)
-						ifList.add(valEx);
-					if (voidEx != null)
-						elseList.add(voidEx);
-					try {valEx = valExp(env);} catch (ParseException pe) {valEx = null;}
-					voidEx = voidExp(env);
-				}
+				elseList = parseInstructionList(env);
 				accept(Atom.rParent);
 			}
-			return new IfNode(cond, ifList, elseList, env);
+			return elseList==null? new IfNode(cond, ifList, new LinkedList<Node>(), env) : new IfNode(cond, ifList, elseList, env);
 		}
 		return null;
 	}
@@ -378,9 +341,13 @@ public class Parser {
 	private Node boolExp(Environment env) throws ParseException {
 		if (maybe(Atom.lParent)) {
 			Node l = valExp(env);
+			if (l == null)
+				throw new ParseException("valExp puste");
 			Token op = boolOp();
 			if (op != null) {
 				Node r = valExp(env);
+				if (r == null)
+					throw new ParseException("valExp puste");
 				accept(Atom.rParent);
 				return op.getAtom()==Atom.andKw?new BoolAndNode(l, r, env):new BoolOrNode(l, r, env);
 			}
@@ -389,6 +356,8 @@ public class Parser {
 		}
 		accept(Atom.notOp);
 		Node l = valExp(env);
+		if (l == null)
+			throw new ParseException("valExp puste");
 		return new BoolNotNode(l, env);
 	}
 
@@ -400,6 +369,8 @@ public class Parser {
 		Token op = assignOp();
 		if (op != null) {
 			Node val = valExp(env);
+			if (val == null)
+				throw new ParseException("valExp puste");
 			switch (op.getAtom()) {
 			case becomesOp:
 				return new AssignNode(varNode, val, env);
@@ -430,6 +401,8 @@ public class Parser {
 			Node vNode = null;
 			if (maybe(Atom.lBracket)) {
 				vNode = valExp(env);
+				if (vNode == null)
+					throw new ParseException("Oczekiwano ");
 				accept(Atom.rBracket);	
 			}
 			if (maybe(Atom.dotOp)) {
@@ -492,12 +465,12 @@ public class Parser {
 			if (maybe(Atom.lParent))
 			{
 				List<Node> args = new LinkedList<Node>();
-				try {n = valExp(env);} catch (ParseException pe) {n = null;}
+				n = valExp(env);
 				while (n != null) {
 					args.add(n);
 					if (!maybe(Atom.commaOp))
 						break;
-					try {n = valExp(env);} catch (ParseException pe) {n = null;}
+					n = valExp(env);
 				}
 				accept(Atom.rParent);
 				return new FunctionCallNode((String)t.getValue(), functions.get((String)t.getValue()), args);
@@ -509,6 +482,8 @@ public class Parser {
 			Token tAttr = null;
 			if (maybe(Atom.lBracket)) {
 				n = valExp(env);
+				if (n == null)
+					throw new ParseException("valExp puste");
 				accept(Atom.rBracket);	
 			}
 			if (maybe(Atom.dotOp))
@@ -528,6 +503,8 @@ public class Parser {
 			op = assignOp();
 			if (op != null) {
 				Node value = valExp(env);
+				if (value == null)
+					throw new ParseException("valExp puste");
 				VariableNode varNode = tAttr==null?
 						new VariableNode((String)t.getValue(), n, null, env)
 						:new VariableNode((String)t.getValue(), n, (String)tAttr.getValue(), env);
@@ -559,6 +536,8 @@ public class Parser {
 				}
 				if (maybe(Atom.rParent)) {
 					Node valNode = valExp(env);
+					if (valNode == null)
+						throw new ParseException("valExp puste");
 					return new CastNode(t.getAtom(), array, valNode, env);
 				}
 				accept(Atom.lParent);
@@ -581,6 +560,8 @@ public class Parser {
 					return left;
 				}
 				Node right = valExp(env);
+				if (right == null)
+					throw new ParseException("valExp puste");
 				accept(Atom.rParent);
 				switch (op.getAtom()) {
 				case andKw:
@@ -612,6 +593,8 @@ public class Parser {
 				}
 			}
 			Node left = valExp(env);
+			if (left == null)
+				throw new ParseException("valExp puste");
 			Node right = null;
 			Token op;
 			if ((op = numOp()) == null) 
@@ -622,6 +605,8 @@ public class Parser {
 				return left;
 			}
 			right = valExp(env);
+			if (right == null)
+				throw new ParseException("valExp puste");
 			accept(Atom.rParent);
 			switch (op.getAtom()) {
 			case andKw:
@@ -693,7 +678,8 @@ public class Parser {
 			accept(Atom.rBracket);
 			return new ArrayNode(elements.toArray());
 		}
-		throw new ParseException("Oczekiwano valExp");
+		//throw new ParseException("Oczekiwano valExp");
+		return null;
 	}
 	
 	//<typeName> ‘(‘ <valExp> (‘,’ <valExp> )* ‘)’

@@ -9,10 +9,16 @@ import remembrall.exceptions.RuntimeException;
 public class FunctionDefNode implements Node {
 	public List<String> args; 
 	public List<Node> body;
+	private String name;
 
-	public FunctionDefNode(List<String> args, List<Node> body) {
+	public FunctionDefNode(String name, List<String> args, List<Node> body) {
+		this.name = name;
 		this.args = args;
 		this.body = body;
+	}
+	
+	public String getName() {
+		return name;
 	}
 	
 	@Override
