@@ -9,7 +9,7 @@ public class GetDuration implements Node {
 
 	@Override
 	public IdentValue evalNode(Environment env) throws RuntimeException {
-		return new IdentValue(4);
+		return new IdentValue(new Long(4));
 	}
 
 }

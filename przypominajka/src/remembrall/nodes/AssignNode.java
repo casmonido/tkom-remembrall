@@ -21,9 +21,9 @@ public class AssignNode implements Node {
 	public IdentValue evalNode(Environment env) throws RuntimeException {
 		IdentValue value = val.evalNode(env);
 		if (value.v != null)
-			env.bind(var.ident, value.v);
+			env.bind(((IdentNode)var.ident).ident, value.v);
 		else
-			env.bind(var.ident, value.vArr);
+			env.bind(((IdentNode)var.ident).ident, value.vArr);
 		return value;
 	}
 

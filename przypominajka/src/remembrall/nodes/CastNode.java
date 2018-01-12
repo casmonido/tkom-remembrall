@@ -4,17 +4,17 @@ import remembrall.Atom;
 import remembrall.Environment;
 import remembrall.IdentValue;
 import remembrall.exceptions.RuntimeException;
+import remembrall.tokens.Token;
+import remembrall.types.Type;
 
 public class CastNode implements Node {
-	protected Atom type;
+	protected Token typ;
 	protected Node right;
-	protected boolean array;
 	protected Environment env;
 	
-	public CastNode(Atom t, boolean a, Node r, Environment e) {
-		type = t;
+	public CastNode(Token typ,  Node r, Environment e) {
+		typ = typ;
 		right = r;
-		array = a;
 		env = e;
 	}
 

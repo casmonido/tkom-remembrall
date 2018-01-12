@@ -1,18 +1,22 @@
 package remembrall.nodes;
 
+import java.util.LinkedList;
+import java.util.List;
+
 import remembrall.Environment;
 import remembrall.IdentValue;
+import remembrall.tokens.Token;
 
 public class ArrayNode implements Node {
 
-	protected Object [] value;
+	protected List<Token> value;
 	
-	public ArrayNode(Object [] v) {
-		value = v;
+	public ArrayNode(List<Token> list) {
+		value = list;
 	}
 
 	public ArrayNode(int num) {
-		value = new Object [num];
+		value = new LinkedList<Token>();
 	}
 	
 	@Override

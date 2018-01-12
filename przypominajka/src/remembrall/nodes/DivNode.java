@@ -14,6 +14,6 @@ public class DivNode extends ArythmeticNode {
 	public IdentValue evalNode(Environment env) throws RuntimeException {
 		Object l = left.evalNode(env).v;
 		Object r = right.evalNode(env).v;
-		return new IdentValue((Double)l + (Double)r);
+		return new IdentValue(Double.parseDouble(l.toString()) / Double.parseDouble(r.toString()));
 	}
 }

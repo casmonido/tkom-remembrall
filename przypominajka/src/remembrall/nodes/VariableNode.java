@@ -7,22 +7,21 @@ import remembrall.Environment;
 import remembrall.IdentValue;
 
 public class VariableNode implements Node {
-	public String ident;
+	public Node ident;
 	public String attrib;
 	public Node numVal;
 	public Environment env;
 
-	public VariableNode(String i, Node v, String a, Environment e) {
+	public VariableNode(Node i, Node v, String a, Environment e) {
 		ident = i;
 		attrib = a;
 		numVal = v;
 		env = e;
 	}
 
-
 	@Override
 	public IdentValue evalNode(Environment env) throws remembrall.exceptions.RuntimeException { 
-		IdentValue objVal = env.resolve(ident);
+		IdentValue objVal = ident.evalNode(env);
 		Object obj = null;
 		if (numVal != null)
 			obj = objVal.vArr[(int)numVal.evalNode(env).v];
