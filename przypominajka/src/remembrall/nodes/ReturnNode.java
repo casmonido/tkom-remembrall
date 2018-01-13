@@ -5,11 +5,9 @@ import remembrall.TypedValue;
 
 public class ReturnNode implements Node {
 	protected Node node;
-	protected Environment env;
 	
-	public ReturnNode(Node n, Environment e) {
+	public ReturnNode(Node n) {
 		node = n;
-		env = e;
 	}
 
 	@Override

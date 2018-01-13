@@ -11,18 +11,16 @@ public class IfNode implements Node {
 	protected Node cond;
 	protected List<Node>  iflist;
 	protected List<Node>  elselist;
-	protected Environment env;
 	
-	public IfNode(Node c, List<Node> il, List<Node> el, Environment e) {
+	public IfNode(Node c, List<Node> il, List<Node> el) {
 		cond = c;
 		iflist = il;
 		elselist = el;
-		env = e;
 	}
 
 	@Override
 	public TypedValue evalNode(Environment env) throws RuntimeException {
-		if ((boolean)cond.evalNode(env).v == true) 
+		if ((boolean)cond.evalNode(env).getValue() == true) 
 		{
 			env.addLayer();
 			for (Node r : iflist)

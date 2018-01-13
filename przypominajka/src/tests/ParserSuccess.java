@@ -22,7 +22,7 @@ import remembrall.nodes.LiteralNode;
 import remembrall.nodes.MultiplicationNode;
 import remembrall.nodes.Node;
 import remembrall.nodes.RepeatNode;
-import remembrall.nodes.SelfAdditionNode;
+import remembrall.nodes.UnaryAdditionNode;
 import remembrall.nodes.StartNode;
 import remembrall.nodes.VariableNode;
 
@@ -94,8 +94,8 @@ public class ParserSuccess extends TestCase {
 		assertEquals(((LiteralNode)a.args.get(0)).value, "jigsaw-falling-into-place");
 		assertEquals(((VariableNode)a.args.get(1)).ident, "i");
 		
-		SelfAdditionNode e = (SelfAdditionNode)r.right.get(1);
-		assertEquals(e.var.ident, "i");
+		UnaryAdditionNode e = (UnaryAdditionNode)r.right.get(1);
+		//assertEquals(e.var.ident, "i");
 
 		a = (FunctionCallNode)r.right.get(2);
 		assertEquals(a.funcName, "sleep");

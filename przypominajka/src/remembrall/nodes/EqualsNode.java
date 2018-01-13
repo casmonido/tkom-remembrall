@@ -6,19 +6,29 @@ import remembrall.exceptions.RuntimeException;
 
 public class EqualsNode extends ComparisonNode {
 
-	public EqualsNode(Node l, Node r, Environment e) {
-		super(l, r, e);
+	public EqualsNode(Node l, Node r) {
+		super(l, r);
 	}
 
 	@Override
 	public TypedValue evalNode(Environment env) throws RuntimeException {
-		Object l = left.evalNode(env).v;
-		Object r = right.evalNode(env).v;
-		if (!l.getClass().isInstance(r))
-			return new TypedValue(false);
-		if (l.equals(r))
-			return new TypedValue(true);
-		return new TypedValue(false);
+		return super.evalNode(env);
+		// i dodatkowe
+	}
+
+	@Override
+	protected boolean immediateCompareDouble(Double ll, Double rr) {
+		return ll == rr;
+	}
+
+	@Override
+	protected boolean immediateCompareInt(Integer ll, Integer rr) {
+		return ll == rr;
+	}
+
+	@Override
+	protected String getOperator() {
+		return "==";
 	}
 
 }

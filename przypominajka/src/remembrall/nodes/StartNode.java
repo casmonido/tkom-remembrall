@@ -9,12 +9,10 @@ public class StartNode implements Node {
 	public List<Node> earlyAssign;
 	public Node left;
 	public List<Node> right;
-	protected Environment env;
 	
-	public StartNode(List<Node> asgn, Node l, List<Node> r, Environment e) {
+	public StartNode(List<Node> asgn, Node l, List<Node> r) {
 		left = l;
 		right = r;
-		env = e;
 		earlyAssign = asgn;
 	}
 
@@ -23,7 +21,7 @@ public class StartNode implements Node {
 	public TypedValue evalNode(Environment env) throws remembrall.exceptions.RuntimeException {
 		for (Node r : earlyAssign)
 			r.evalNode(env);
-		if ((boolean)left.evalNode(env).v == true)
+		if ((boolean)left.evalNode(env).getValue() == true)
 			for (Node r : right)
 				r.evalNode(env);
 		return null;

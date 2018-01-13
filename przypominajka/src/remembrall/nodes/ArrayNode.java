@@ -5,22 +5,27 @@ import java.util.List;
 
 import remembrall.Environment;
 import remembrall.TypedValue;
+import remembrall.exceptions.RuntimeException;
 import remembrall.tokens.Token;
+import remembrall.types.ArrayType;
+import remembrall.types.AtomType;
+import remembrall.types.Type;
 
 public class ArrayNode implements Node {
 
-	protected List<Token> value;
+	protected Node [] value;
 	
-	public ArrayNode(List<Token> list) {
-		value = list;
+	public ArrayNode(List<Node> list) {
+		value = list.toArray(new Node [list.size()]);
 	}
 
 	public ArrayNode(int num) {
-		value = new LinkedList<Token>();
+		value = new Node [num];
 	}
 	
 	@Override
 	public TypedValue evalNode(Environment env) {
-		return new TypedValue(value);
+		return new TypedValue(value, ArrayType.type);
 	}
+
 }

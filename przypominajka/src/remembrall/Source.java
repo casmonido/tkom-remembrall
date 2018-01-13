@@ -35,8 +35,8 @@ public class Source {
 	}
 	
 	private void adjustCurrentPos(int c) {
-		// line 1 + char 1
-		// \n  -> line ++ i char = 
+		if (c == -1)
+			return;
 		if (c == '\n') {
 			currentPos.lineNum++;
 			currentPos.charNum = 0;

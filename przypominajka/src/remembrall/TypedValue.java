@@ -4,12 +4,21 @@ import remembrall.types.Type;
 
 public class TypedValue {
 	
-	public Object v;
-	public Type typ;
+	private Object v;
+	private Type typ;
 	
 	
-	public TypedValue(Object v) {
+	public TypedValue(Object v, Type t) {
 		this.v = v;
+		this.typ = t;
+	}
+	
+	public Object getValue() {
+		return v;
+	}
+	
+	public Type getType() {
+		return typ;
 	}
 
 }

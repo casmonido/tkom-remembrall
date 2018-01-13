@@ -1,23 +1,24 @@
 package remembrall.nodes;
 
-import remembrall.Environment;
-import remembrall.TypedValue;
 
 public class LessThanNode extends ComparisonNode {
 
-	public LessThanNode(Node l, Node r, Environment e) {
-		super(l, r, e);
+	public LessThanNode(Node l, Node r) {
+		super(l, r);
 	}
 
 	@Override
-	public TypedValue evalNode(Environment env) throws remembrall.exceptions.RuntimeException {
-		Object l = left.evalNode(env).v;
-		Object r = right.evalNode(env).v;
-		if (!l.getClass().isInstance(r))
-			throw new RuntimeException("Porównanie między obiektami różych typów");
-		if (l instanceof Long)
-			if ((Long)l < (Long)r)
-				return new TypedValue(true);
-		return new TypedValue(false);
+	protected boolean immediateCompareDouble(Double ll, Double rr) {
+		return ll < rr;
+	}
+
+	@Override
+	protected boolean immediateCompareInt(Integer ll, Integer rr) {
+		return ll < rr;
+	}
+
+	@Override
+	protected String getOperator() {
+		return "<";
 	}
 }

@@ -3,8 +3,10 @@ package remembrall.nodes;
 import java.util.List;
 
 import remembrall.Environment;
+import remembrall.TypedIdent;
 import remembrall.TypedValue;
 import remembrall.exceptions.RuntimeException;
+
 
 public class FunctionCallNode implements Node {
 	
@@ -12,7 +14,6 @@ public class FunctionCallNode implements Node {
 	public Node builtinFunc;
 	public String funcName;
 	public List<Node> args;
-	private Environment env;
 
 	public FunctionCallNode(String funcName, Node f, List<Node> args) {
 		this.funcName = funcName;
@@ -30,16 +31,14 @@ public class FunctionCallNode implements Node {
 			return builtinFunc.evalNode(env);
 		Environment newEnv = new Environment();
 		for (int i = 0; i < func.args.size(); i++) {
-			String argName = func.args.get(i);
-			Node val = args.get(i);
-			try {
-				newEnv.bind(argName, val.evalNode(env));
-			} catch (RuntimeException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			TypedIdent arg = func.args.get(i);
+			TypedValue val = args.get(i).evalNode(env);
+			if (!arg.getType().equals(val.getType()))
+				throw new RuntimeException("Na pozycji " + i + 
+						" funkcja " + func.getName() + 
+						" oczekuje argumentu o typie " + val.getType().toString());
+			newEnv.bind(arg.getName(), val);
 		}
-		TypedValue obj = func.evalNode(newEnv); // kiedy vArr?
 		return func.evalNode(newEnv);
 	}
 

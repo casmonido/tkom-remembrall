@@ -2,6 +2,7 @@ package remembrall.tokens;
 
 import remembrall.Atom;
 import remembrall.TextPos;
+import remembrall.types.AtomType;
 
 public class BasicToken implements Token {
 
@@ -34,4 +35,6 @@ public class BasicToken implements Token {
 		public String toString() {
 			return atom.toString() + "\n" + position.toString();
 		}
+
+
 }

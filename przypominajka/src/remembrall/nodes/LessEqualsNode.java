@@ -6,19 +6,22 @@ import remembrall.exceptions.RuntimeException;
 
 public class LessEqualsNode extends ComparisonNode {
 
-	public LessEqualsNode(Node l, Node r, Environment e) {
-		super(l, r, e);
+	public LessEqualsNode(Node l, Node r) {
+		super(l, r);
 	}
 
 	@Override
-	public TypedValue evalNode(Environment env) throws RuntimeException {
-		Object l = left.evalNode(env).v;
-		Object r = right.evalNode(env).v;
-		if (!l.getClass().isInstance(r))
-			throw new RuntimeException("");
-		if (l instanceof Long)
-			if ((Long)l <= (Long)r)
-				return new TypedValue(true);
-		return new TypedValue(false);
+	protected boolean immediateCompareDouble(Double ll, Double rr) {
+		return ll <= rr;
+	}
+
+	@Override
+	protected boolean immediateCompareInt(Integer ll, Integer rr) {
+		return ll <= rr;
+	}
+
+	@Override
+	protected String getOperator() {
+		return "<=";
 	}
 }

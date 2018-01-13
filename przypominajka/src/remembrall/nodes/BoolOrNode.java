@@ -1,25 +1,25 @@
 package remembrall.nodes;
 
+import remembrall.Atom;
 import remembrall.Environment;
 import remembrall.TypedValue;
 import remembrall.exceptions.RuntimeException;
+import remembrall.types.AtomType;
 
 public class BoolOrNode implements Node {
 
 	protected Node left;
 	protected Node right;
-	protected Environment env;
 	
-	public BoolOrNode(Node l, Node r, Environment e) {
+	public BoolOrNode(Node l, Node r) {
 		left = l;
 		right = r;
-		env = e;
 	}
 
 	@Override
 	public TypedValue evalNode(Environment env) throws RuntimeException {
-		return new TypedValue(((boolean) left.evalNode(env).v) ||
-				((boolean) right.evalNode(env).v));
+		return new TypedValue(((boolean) left.evalNode(env).getValue()) ||
+				((boolean) right.evalNode(env).getValue()), new AtomType(Atom.typeBool));
 	}
 
 }

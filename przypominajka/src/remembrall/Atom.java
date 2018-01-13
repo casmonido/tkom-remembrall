@@ -32,7 +32,6 @@ public enum Atom {
 	doubleConst,
 	stringConst,
 	
-	colonOp, // :
 	doublePlus, //++
 	plusBecomes, // +=
 	plusOp, //+

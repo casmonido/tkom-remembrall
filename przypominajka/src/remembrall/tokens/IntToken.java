@@ -2,23 +2,19 @@ package remembrall.tokens;
 
 import remembrall.Atom;
 import remembrall.TextPos;
+import remembrall.types.AtomType;
 
 public class IntToken extends BasicToken {
 	
-	Long value;
+	Integer value;
 
-	public IntToken(Atom a, TextPos tp, Long v) {
+	public IntToken(Atom a, TextPos tp, Integer v) {
 		super(a, tp);
 		value = v;
 	}
 	
-	public IntToken(Atom a, TextPos tp, Integer v) {
-		super(a, tp);
-		value = new Long(v);
-	}
-	
 	@Override
-	public Long getValue() {
+	public Integer getValue() {
 		return value;
 	}
 	

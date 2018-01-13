@@ -2,6 +2,7 @@ package remembrall.tokens;
 
 import remembrall.Atom;
 import remembrall.TextPos;
+import remembrall.types.AtomType;
 
 public class DoubleToken extends BasicToken {
 	
@@ -20,5 +21,6 @@ public class DoubleToken extends BasicToken {
 	public String toString() {
 		return super.toString() + "\n" + value.toString();
 	}
+	
 
 }

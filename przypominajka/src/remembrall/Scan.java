@@ -170,9 +170,6 @@ public class Scan implements ScanInterface {
 		case '@':
 			nextChar();
 			return new BasicToken(Atom.atOp, atomStart);
-		case ':':
-			nextChar();
-			return new BasicToken(Atom.colonOp, atomStart);
 		}
 		errTracker.scanError(atomStart, "Nierozpoznany znak: " + (char) curChar);
 		nextChar(); 
@@ -190,7 +187,7 @@ public class Scan implements ScanInterface {
 			if (curChar == '\\') { 
 				nextChar();
 				if (curChar!=stringStart && curChar!='\\') { // -1 również wywoła ten error
-					errTracker.scanError(atomStart, "Po escape (\\) mogą występować tylko: \" lub ', \\"); //b, t, n, f, r,
+					errTracker.scanError(atomStart, "Po escape (\\) mogą występować tylko: \" lub ', \\");
 					return skipRestOfTheString(stringStart); 
 				}
 			}
@@ -297,10 +294,10 @@ public class Scan implements ScanInterface {
 		if (curChar == '.') 
 			return scanDouble(scannedPart);
 		else {
-			long i = 0;
+			int i = 0;
 			try {
-				i = Long.parseLong(scannedPart);
-			} catch (NumberFormatException ne) { // za długi na long
+				i = Integer.parseInt(scannedPart);
+			} catch (NumberFormatException ne) { // za długi na int
 				return new DoubleToken(Atom.doubleConst, atomStart, Double.parseDouble(scannedPart));
 			}
 			return new IntToken(Atom.intConst, atomStart, i);

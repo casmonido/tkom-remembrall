@@ -1,12 +1,8 @@
 package remembrall.types;
 
-import remembrall.Atom;
+public interface Type {
 
-public class Type {
-	public Type(Atom n, boolean arr) {
-		name = n;
-		array = arr;
-	}
-	public Atom name;
-	public boolean array;
+	public abstract String toString();
+	public abstract boolean equals(Object o);
+	public abstract int hashCode();
 }
