@@ -1,7 +1,7 @@
 package remembrall.nodes;
 
 import remembrall.Environment;
-import remembrall.IdentValue;
+import remembrall.TypedValue;
 
 public class MinusAssignNode implements Node {
 	private VariableNode var;
@@ -16,13 +16,15 @@ public class MinusAssignNode implements Node {
 	}
 	
 	@Override
-	public IdentValue evalNode(Environment env) throws remembrall.exceptions.RuntimeException {
-		IdentValue value = val.evalNode(env);
+	public TypedValue evalNode(Environment env) throws remembrall.exceptions.RuntimeException {
+		TypedValue value = val.evalNode(env);
 		if (value.v instanceof Long)
-			env.bind(((IdentNode)var.ident).ident, (Long) value.v - (Long) env.resolve(((IdentNode)var.ident).ident).v);
+			env.bind(((IdentNode)var.ident).ident, 
+					new TypedValue((Long) value.v - (Long) env.resolve(((IdentNode)var.ident).ident).v));
 		else
 			if (value.v instanceof Double)
-				env.bind(((IdentNode)var.ident).ident, (Double) value.v - (Double) env.resolve(((IdentNode)var.ident).ident).v);
+				env.bind(((IdentNode)var.ident).ident, 
+						new TypedValue((Double) value.v - (Double) env.resolve(((IdentNode)var.ident).ident).v));
 			else
 				throw new remembrall.exceptions.RuntimeException("Operator -= zastosowany do obiektów złego typu");
 		return value;

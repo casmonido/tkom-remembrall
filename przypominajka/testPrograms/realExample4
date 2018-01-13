@@ -1,6 +1,7 @@
 When (true) do 
 bdayguys = getBirthdaysToday()
 i = 0
-repeatUntil((i < bdayguys.length)) (
+repeatUntil((i >= bdayguys.length)) (
 sendSMS('', bdayguys[i] ) //Wszystkiego najlepszego!
+i++
 ).

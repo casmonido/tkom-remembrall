@@ -1,7 +1,7 @@
-package remembrall.nodes.builtin;
+package remembrall.functions.builtin;
 
 import remembrall.Environment;
-import remembrall.IdentValue;
+import remembrall.TypedValue;
 import remembrall.exceptions.RuntimeException;
 import remembrall.nodes.Node;
 import remembrall.types.Time;
@@ -9,8 +9,8 @@ import remembrall.types.Time;
 public class GetCurrentTime implements Node {
 
 	@Override
-	public IdentValue evalNode(Environment env) throws RuntimeException {
-		return new IdentValue(new Time(new Long(2), new Long(10)));
+	public TypedValue evalNode(Environment env) throws RuntimeException {
+		return new TypedValue(new Time(new Long(2), new Long(10)));
 	}
 
 }

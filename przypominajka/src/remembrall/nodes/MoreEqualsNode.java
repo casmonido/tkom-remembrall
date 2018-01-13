@@ -1,7 +1,7 @@
 package remembrall.nodes;
 
 import remembrall.Environment;
-import remembrall.IdentValue;
+import remembrall.TypedValue;
 
 public class MoreEqualsNode extends ComparisonNode {
 
@@ -10,14 +10,14 @@ public class MoreEqualsNode extends ComparisonNode {
 	}
 
 	@Override
-	public IdentValue evalNode(Environment env) throws remembrall.exceptions.RuntimeException {
+	public TypedValue evalNode(Environment env) throws remembrall.exceptions.RuntimeException {
 		Object l = left.evalNode(env).v;
 		Object r = right.evalNode(env).v;
 		if (!l.getClass().isInstance(r))
 			throw new RuntimeException("Porównanie między obiektami różych typów");
 		if (l instanceof Long)
 			if ((Long)l >= (Long)r)
-				return new IdentValue(true);
-		return new IdentValue(false);
+				return new TypedValue(true);
+		return new TypedValue(false);
 	}
 }

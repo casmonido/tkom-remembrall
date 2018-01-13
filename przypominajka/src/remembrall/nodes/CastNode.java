@@ -2,7 +2,7 @@ package remembrall.nodes;
 
 import remembrall.Atom;
 import remembrall.Environment;
-import remembrall.IdentValue;
+import remembrall.TypedValue;
 import remembrall.exceptions.RuntimeException;
 import remembrall.tokens.Token;
 import remembrall.types.Type;
@@ -19,9 +19,7 @@ public class CastNode implements Node {
 	}
 
 	@Override
-	public IdentValue evalNode(Environment env) throws RuntimeException { // jak rzutowac??
-		if (right.evalNode(env).v != null)
-			return new IdentValue(right.evalNode(env).v); 
-		return new IdentValue(right.evalNode(env).vArr);
+	public TypedValue evalNode(Environment env) throws RuntimeException { // jak rzutowac??
+		return new TypedValue(right.evalNode(env).v);
 	}
 }

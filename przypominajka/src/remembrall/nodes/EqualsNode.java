@@ -1,7 +1,7 @@
 package remembrall.nodes;
 
 import remembrall.Environment;
-import remembrall.IdentValue;
+import remembrall.TypedValue;
 import remembrall.exceptions.RuntimeException;
 
 public class EqualsNode extends ComparisonNode {
@@ -11,14 +11,14 @@ public class EqualsNode extends ComparisonNode {
 	}
 
 	@Override
-	public IdentValue evalNode(Environment env) throws RuntimeException {
+	public TypedValue evalNode(Environment env) throws RuntimeException {
 		Object l = left.evalNode(env).v;
 		Object r = right.evalNode(env).v;
 		if (!l.getClass().isInstance(r))
-			return new IdentValue(false);
+			return new TypedValue(false);
 		if (l.equals(r))
-			return new IdentValue(true);
-		return new IdentValue(false);
+			return new TypedValue(true);
+		return new TypedValue(false);
 	}
 
 }

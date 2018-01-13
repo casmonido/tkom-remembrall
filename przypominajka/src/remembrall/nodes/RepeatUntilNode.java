@@ -3,7 +3,7 @@ package remembrall.nodes;
 import java.util.List;
 
 import remembrall.Environment;
-import remembrall.IdentValue;
+import remembrall.TypedValue;
 
 public class RepeatUntilNode implements Node {
 	protected Node left;
@@ -17,7 +17,7 @@ public class RepeatUntilNode implements Node {
 	}
 
 	@Override
-	public IdentValue evalNode(Environment env) throws remembrall.exceptions.RuntimeException {
+	public TypedValue evalNode(Environment env) throws remembrall.exceptions.RuntimeException {
 		env.addLayer();
 		while ((boolean)left.evalNode(env).v == false)
 			for (Node r : right)

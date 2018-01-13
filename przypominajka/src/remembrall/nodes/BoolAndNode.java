@@ -1,7 +1,7 @@
 package remembrall.nodes;
 
 import remembrall.Environment;
-import remembrall.IdentValue;
+import remembrall.TypedValue;
 import remembrall.exceptions.RuntimeException;
 
 public class BoolAndNode implements Node {
@@ -17,8 +17,8 @@ public class BoolAndNode implements Node {
 	}
 
 	@Override
-	public IdentValue evalNode(Environment env) throws RuntimeException {
-		return new IdentValue(((boolean) left.evalNode(env).v) &&
+	public TypedValue evalNode(Environment env) throws RuntimeException {
+		return new TypedValue(((boolean) left.evalNode(env).v) &&
 				((boolean) right.evalNode(env).v));
 	}
 

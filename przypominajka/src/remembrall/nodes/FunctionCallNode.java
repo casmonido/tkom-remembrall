@@ -3,7 +3,7 @@ package remembrall.nodes;
 import java.util.List;
 
 import remembrall.Environment;
-import remembrall.IdentValue;
+import remembrall.TypedValue;
 import remembrall.exceptions.RuntimeException;
 
 public class FunctionCallNode implements Node {
@@ -25,7 +25,7 @@ public class FunctionCallNode implements Node {
 
 	
 	@Override
-	public IdentValue evalNode(Environment env) throws RuntimeException {
+	public TypedValue evalNode(Environment env) throws RuntimeException {
 		if (builtinFunc != null)
 			return builtinFunc.evalNode(env);
 		Environment newEnv = new Environment();
@@ -39,7 +39,7 @@ public class FunctionCallNode implements Node {
 				e.printStackTrace();
 			}
 		}
-		IdentValue obj = func.evalNode(newEnv); // kiedy vArr?
+		TypedValue obj = func.evalNode(newEnv); // kiedy vArr?
 		return func.evalNode(newEnv);
 	}
 

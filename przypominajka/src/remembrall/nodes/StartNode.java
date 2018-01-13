@@ -3,7 +3,7 @@ package remembrall.nodes;
 import java.util.List;
 
 import remembrall.Environment;
-import remembrall.IdentValue;
+import remembrall.TypedValue;
 
 public class StartNode implements Node {
 	public List<Node> earlyAssign;
@@ -20,7 +20,7 @@ public class StartNode implements Node {
 
 	
 	@Override
-	public IdentValue evalNode(Environment env) throws remembrall.exceptions.RuntimeException {
+	public TypedValue evalNode(Environment env) throws remembrall.exceptions.RuntimeException {
 		for (Node r : earlyAssign)
 			r.evalNode(env);
 		if ((boolean)left.evalNode(env).v == true)

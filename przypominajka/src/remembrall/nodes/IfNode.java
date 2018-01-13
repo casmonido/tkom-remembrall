@@ -3,7 +3,7 @@ package remembrall.nodes;
 import java.util.List;
 
 import remembrall.Environment;
-import remembrall.IdentValue;
+import remembrall.TypedValue;
 import remembrall.exceptions.RuntimeException;
 
 
@@ -21,7 +21,7 @@ public class IfNode implements Node {
 	}
 
 	@Override
-	public IdentValue evalNode(Environment env) throws RuntimeException {
+	public TypedValue evalNode(Environment env) throws RuntimeException {
 		if ((boolean)cond.evalNode(env).v == true) 
 		{
 			env.addLayer();

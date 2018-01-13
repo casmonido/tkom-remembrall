@@ -1,7 +1,7 @@
 package remembrall.nodes;
 
 import remembrall.Environment;
-import remembrall.IdentValue;
+import remembrall.TypedValue;
 import remembrall.exceptions.RuntimeException;
 
 public class AssignNode implements Node {
@@ -18,12 +18,9 @@ public class AssignNode implements Node {
 
 	
 	@Override
-	public IdentValue evalNode(Environment env) throws RuntimeException {
-		IdentValue value = val.evalNode(env);
-		if (value.v != null)
-			env.bind(((IdentNode)var.ident).ident, value.v);
-		else
-			env.bind(((IdentNode)var.ident).ident, value.vArr);
+	public TypedValue evalNode(Environment env) throws RuntimeException {
+		TypedValue value = val.evalNode(env);
+		env.bind(((IdentNode)var.ident).ident, value);
 		return value;
 	}
 

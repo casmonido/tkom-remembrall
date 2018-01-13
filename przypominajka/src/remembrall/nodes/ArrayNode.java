@@ -4,7 +4,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import remembrall.Environment;
-import remembrall.IdentValue;
+import remembrall.TypedValue;
 import remembrall.tokens.Token;
 
 public class ArrayNode implements Node {
@@ -20,7 +20,7 @@ public class ArrayNode implements Node {
 	}
 	
 	@Override
-	public IdentValue evalNode(Environment env) {
-		return new IdentValue(value);
+	public TypedValue evalNode(Environment env) {
+		return new TypedValue(value);
 	}
 }

@@ -1,7 +1,7 @@
 package remembrall.nodes;
 
 import remembrall.Environment;
-import remembrall.IdentValue;
+import remembrall.TypedValue;
 
 public class LiteralNode implements Node {
 
@@ -12,7 +12,7 @@ public class LiteralNode implements Node {
 	}
 
 	@Override
-	public IdentValue evalNode(Environment env) {
-		return new IdentValue(value);
+	public TypedValue evalNode(Environment env) {
+		return new TypedValue(value);
 	}
 }

@@ -10,7 +10,7 @@ import org.junit.Test;
 
 import remembrall.Environment;
 import remembrall.ErrorTracker;
-import remembrall.IdentValue;
+import remembrall.TypedValue;
 import remembrall.Parser;
 import remembrall.Scan;
 import remembrall.Source;

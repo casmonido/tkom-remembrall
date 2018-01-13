@@ -1,7 +1,7 @@
 package remembrall.nodes;
 
 import remembrall.Environment;
-import remembrall.IdentValue;
+import remembrall.TypedValue;
 
 public class SelfAdditionNode implements Node {
 	public VariableNode var;
@@ -13,15 +13,17 @@ public class SelfAdditionNode implements Node {
 	}
 	
 	@Override
-	public IdentValue evalNode(Environment env) throws RuntimeException {
+	public TypedValue evalNode(Environment env) throws RuntimeException {
 		Object l = env.resolve(((IdentNode)var.ident).ident).v;
 		if (l instanceof Long || l instanceof Integer) {
-			env.bind(((IdentNode)var.ident).ident, ((Long)env.resolve(((IdentNode)var.ident).ident).v) + 1); 
-			return new IdentValue(env.resolve(((IdentNode)var.ident).ident));
+			env.bind(((IdentNode)var.ident).ident, 
+					new TypedValue(((Long)env.resolve(((IdentNode)var.ident).ident).v) + 1)); 
+			return new TypedValue(env.resolve(((IdentNode)var.ident).ident));
 		}
 		if (l instanceof Double) {
-			env.bind(((IdentNode)var.ident).ident, ((Double)env.resolve(((IdentNode)var.ident).ident).v) + 1);
-			return new IdentValue(env.resolve(((IdentNode)var.ident).ident));
+			env.bind(((IdentNode)var.ident).ident, 
+					new TypedValue(((Double)env.resolve(((IdentNode)var.ident).ident).v) + 1));
+			return new TypedValue(env.resolve(((IdentNode)var.ident).ident));
 		}
 		else
 			throw new RuntimeException

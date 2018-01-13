@@ -7,6 +7,13 @@ import java.util.Map;
 
 import remembrall.exceptions.ParseException;
 import remembrall.exceptions.RuntimeException;
+import remembrall.functions.builtin.GetBirthdaysToday;
+import remembrall.functions.builtin.GetCurrentDate;
+import remembrall.functions.builtin.GetCurrentTime;
+import remembrall.functions.builtin.GetDuration;
+import remembrall.functions.builtin.GetSunset;
+import remembrall.functions.builtin.GetWeatherForecast;
+import remembrall.functions.builtin.SendSMS;
 import remembrall.nodes.AdditionNode;
 import remembrall.nodes.ArrayNode;
 import remembrall.nodes.AssignNode;
@@ -36,18 +43,11 @@ import remembrall.nodes.RepeatUntilNode;
 import remembrall.nodes.ReturnNode;
 import remembrall.nodes.SelfAdditionNode;
 import remembrall.nodes.SelfSubstractionNode;
-import remembrall.tokens.BasicToken;
 import remembrall.tokens.Token;
 import remembrall.types.Type;
 import remembrall.nodes.StartNode;
 import remembrall.nodes.SubstractionNode;
 import remembrall.nodes.VariableNode;
-import remembrall.nodes.builtin.GetBirthdaysToday;
-import remembrall.nodes.builtin.GetCurrentDate;
-import remembrall.nodes.builtin.GetCurrentTime;
-import remembrall.nodes.builtin.GetDuration;
-import remembrall.nodes.builtin.GetSunset;
-import remembrall.nodes.builtin.GetWeatherForecast;
 
 
 public class Parser {
@@ -64,9 +64,8 @@ public class Parser {
 		functions.put("switchOnAlarm", new GetCurrentTime());
 		functions.put("sleep", new GetWeatherForecast());
 		functions.put("getBirthdaysToday", new GetBirthdaysToday());
-		functions.put("sendSMS", new GetWeatherForecast());
+		functions.put("sendSMS", new SendSMS());
 		functions.put("getCurrentDate", new GetCurrentDate());
-		
 		functions.put("getDuration", new GetDuration());
 		functions.put("getCurrentDayTime", new GetCurrentDate());
 		functions.put("getSunset", new GetSunset());
@@ -127,7 +126,7 @@ public class Parser {
 	public void start() {
 		Environment env = new Environment();
 		//[<funcDef>*] 
-		include();
+		parseIncludeInstruction();
 		initFunctions();
 		FunctionDefNode func;
 		try {
@@ -195,7 +194,7 @@ public class Parser {
 	private List<Node> parseInstructionList(Environment env) throws ParseException {
 		List<Node> list = new LinkedList<Node>();
 		Node expr = null;
-		while ((expr = parseAssignExpression(env)) != null || (expr = voidExp(env)) != null) {
+		while ((expr = parseAssignExpression(env)) != null || (expr = parseVoidExp(env)) != null) {
 			if (expr != null)
 				list.add(expr);
 		}
@@ -227,7 +226,7 @@ public class Parser {
 	}
 	
 	//'include' <fileName>
-	public void include() {
+	public void parseIncludeInstruction() {
 		if (maybe(Atom.inclKw)) {
 			try {
 				accept(Atom.stringConst);
@@ -275,11 +274,11 @@ public class Parser {
 		if (!(list.get(list.size()-1) instanceof ReturnNode))
 			throw new ParseException("Funkcja nic nie zwraca!");
 		accept(Atom.rParent);
-		return new FunctionDefNode(name, attrs, list);
+		return new FunctionDefNode(retTyp, name, attrs, list);
 	}
 
 	//<voidExp> -> <ifExp> | <repExp> | <retExp> | <procedureCall>
-	private Node voidExp(Environment env) throws ParseException {
+	private Node parseVoidExp(Environment env) throws ParseException {
 		Node n = ifExp(env);
 		if (n != null)
 			return n;

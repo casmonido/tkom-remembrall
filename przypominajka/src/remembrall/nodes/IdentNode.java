@@ -2,7 +2,7 @@ package remembrall.nodes;
 
 
 import remembrall.Environment;
-import remembrall.IdentValue;
+import remembrall.TypedValue;
 
 public class IdentNode implements Node {
 	public String ident;
@@ -12,8 +12,7 @@ public class IdentNode implements Node {
 	}
 
 	@Override
-	public IdentValue evalNode(Environment env) throws remembrall.exceptions.RuntimeException { 
-		IdentValue objVal = env.resolve(ident);
-		return new IdentValue(objVal);
+	public TypedValue evalNode(Environment env) throws remembrall.exceptions.RuntimeException { 
+		return env.resolve(ident);
 	}
 }

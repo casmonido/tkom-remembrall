@@ -10,24 +10,21 @@ import java.util.Map;
 
 public class Environment {
 
-	List<Map<String, Object>> idents = new LinkedList<Map<String, Object>>();
-	//List<Map<String, Object[]>> arrIdents = new LinkedList<Map<String, Object[]>>();
+	List<Map<String, TypedValue>> idents = new LinkedList<Map<String, TypedValue>>();
 	
 	public Environment() {
 		addLayer();
 	}
 	
 	public void addLayer() {
-		idents.add(new HashMap<String, Object>());
-		//arrIdents.add(new HashMap<String, Object []>());
+		idents.add(new HashMap<String, TypedValue>());
 	}
 	
 	public void removeLayer() {
 		idents.remove(idents.size()-1);
-		//arrIdents.remove(arrIdents.size()-1);
 	}
 	
-	public void bind(String ident, Object val) {
+	public void bind(String ident, TypedValue val) {
 		int layer = findLayer(ident);
 		if (layer == -1)
 			layer = idents.size()-1;
@@ -42,12 +39,12 @@ public class Environment {
 	}
 	
 	
-	public IdentValue resolve(String ident) {
-		Object obj = null;
+	public TypedValue resolve(String ident) {
+		TypedValue obj = null;
 		for (int i = idents.size()-1; i >= 0; i--) {
 			obj = idents.get(i).get(ident);
 			if (obj != null)
-				return new IdentValue(obj);
+				return obj;
 		}
 		return null;
 	}

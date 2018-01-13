@@ -4,7 +4,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 
 import remembrall.Environment;
-import remembrall.IdentValue;
+import remembrall.TypedValue;
 
 public class VariableNode implements Node {
 	public Node ident;
@@ -20,18 +20,15 @@ public class VariableNode implements Node {
 	}
 
 	@Override
-	public IdentValue evalNode(Environment env) throws remembrall.exceptions.RuntimeException { 
-		IdentValue objVal = ident.evalNode(env);
-		Object obj = null;
+	public TypedValue evalNode(Environment env) throws remembrall.exceptions.RuntimeException { 
+		Object obj = ident.evalNode(env).v;
 		if (numVal != null)
-			obj = objVal.vArr[(int)numVal.evalNode(env).v];
-		else
-			obj = (objVal.v==null)?objVal.vArr:objVal.v;
+			obj = ((Object [])obj)[(int)numVal.evalNode(env).v];
 		if (attrib != null) {
 			Field f = null;
 			try {
 				if ("length".equals(attrib))
-					return new IdentValue(new Long(Array.getLength(obj)));
+					return new TypedValue(new Long(Array.getLength(obj)));
 				f = obj.getClass().getDeclaredField(attrib);
 			} catch (NoSuchFieldException e) {
 				throw new RuntimeException("Atrybut nie występuje w obiekcie");
@@ -44,6 +41,6 @@ public class VariableNode implements Node {
 				e.printStackTrace();
 			}
 		}
-		return new IdentValue(obj);
+		return new TypedValue(obj);
 	}
 }
