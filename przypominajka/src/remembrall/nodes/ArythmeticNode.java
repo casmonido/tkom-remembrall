@@ -29,7 +29,7 @@ public abstract class ArythmeticNode implements Node {
 		switch (((AtomType)l.getType()).getAtom()) {
 		case typeInt:
 			return new TypedValue(
-					immediateEvalLong((Long)l.getValue(), (Long)r.getValue()),
+					immediateEvalInt((Integer)l.getValue(), (Integer)r.getValue()),
 					new AtomType(Atom.typeInt));
 		case typeDouble:
 			if (l.getValue() instanceof Double)
@@ -48,7 +48,7 @@ public abstract class ArythmeticNode implements Node {
 	}
 	
 	protected abstract Double immediateEvalDouble(Double ll, Double rr);
-	protected abstract Long immediateEvalLong(Long ll, Long rr);
+	protected abstract Integer immediateEvalInt(Integer ll, Integer rr);
 	protected String immediateEvalString(String ll, String rr) throws RuntimeException {
 		throw new RuntimeException("Próba zastosowania operatora " + getOperator() +
 				" do obiektów typu string");

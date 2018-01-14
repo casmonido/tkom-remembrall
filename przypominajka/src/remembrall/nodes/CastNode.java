@@ -4,9 +4,7 @@ import remembrall.Atom;
 import remembrall.Environment;
 import remembrall.TypedValue;
 import remembrall.exceptions.RuntimeException;
-import remembrall.tokens.Token;
 import remembrall.types.AtomType;
-import remembrall.types.Type;
 
 public class CastNode implements Node {
 	protected Atom typ;

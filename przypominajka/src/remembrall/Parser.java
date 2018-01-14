@@ -502,7 +502,7 @@ public class Parser {
 		Token op = null; 
 		while ((op = doubleOp()) != null) 
 		{
-			Node right = parseLogic();
+			Node right = parseMult();
 			if (right == null)
 				throw new ParseException("Po operatorze spodziewane wyrażenie!");
 			switch (op.getAtom()) {
@@ -525,7 +525,7 @@ public class Parser {
 			return null;
 		Token op; 
 		while ((op = arytmOp()) != null) {
-			Node right = parseLogic();
+			Node right = parseArytm();
 			if (right == null)
 				throw new ParseException("Po operatorze spodziewane wyrażenie!");
 			switch (op.getAtom()) {
@@ -548,7 +548,7 @@ public class Parser {
 			return null;
 		Token op; 
 		while ((op = compOp()) != null) {
-			Node right = parseLogic();
+			Node right = parseRelat();
 			if (right == null)
 				throw new ParseException("Po operatorze spodziewane wyrażenie!");
 			switch (op.getAtom()) {
@@ -599,6 +599,7 @@ public class Parser {
 		return left;
 	}
 
+	// i  = i = 9; ?? while
 	private Node parseAssignExpression() throws ParseException {
 		Node left = parseLogic();
 		if (left == null)

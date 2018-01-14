@@ -1,9 +1,5 @@
 package remembrall.nodes;
 
-import remembrall.Environment;
-import remembrall.TypedValue;
-import remembrall.exceptions.RuntimeException;
-
 public class DivNode extends ArythmeticNode {
 
 	public DivNode(Node l, Node r) {
@@ -16,7 +12,7 @@ public class DivNode extends ArythmeticNode {
 	}
 
 	@Override
-	protected Long immediateEvalLong(Long ll, Long rr) {
+	protected Integer immediateEvalInt(Integer ll, Integer rr) {
 		return ll/rr;
 	}
 

@@ -13,7 +13,7 @@ public class AdditionNode extends ArythmeticNode {
 	}
 
 	@Override
-	protected Long immediateEvalLong(Long ll, Long rr) {
+	protected Integer immediateEvalInt(Integer ll, Integer rr) {
 		return ll+rr;
 	}
 

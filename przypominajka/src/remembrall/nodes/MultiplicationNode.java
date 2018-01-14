@@ -1,8 +1,5 @@
 package remembrall.nodes;
 
-import remembrall.Environment;
-import remembrall.TypedValue;
-import remembrall.exceptions.RuntimeException;
 
 public class MultiplicationNode extends ArythmeticNode {
 
@@ -16,7 +13,7 @@ public class MultiplicationNode extends ArythmeticNode {
 	}
 
 	@Override
-	protected Long immediateEvalLong(Long ll, Long rr) {
+	protected Integer immediateEvalInt(Integer ll, Integer rr) {
 		return ll*rr;
 	}
 

@@ -1,10 +1,5 @@
 package remembrall.nodes;
 
-import remembrall.Atom;
-import remembrall.Environment;
-import remembrall.TypedValue;
-import remembrall.exceptions.RuntimeException;
-import remembrall.types.AtomType;
 
 public class SubstractionNode extends ArythmeticNode {
 
@@ -18,7 +13,7 @@ public class SubstractionNode extends ArythmeticNode {
 	}
 
 	@Override
-	protected Long immediateEvalLong(Long ll, Long rr) {
+	protected Integer immediateEvalInt(Integer ll, Integer rr) {
 		return ll-rr;
 	}
 
